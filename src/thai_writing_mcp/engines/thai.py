@@ -71,9 +71,13 @@ class ThaiAnalyzer:
 
     def analyze(self, view_text: str, spans, profile: str) -> list[Issue]:
         issues: list[Issue] = []
-        issues.extend(self._canonical_issues(view_text, spans))
+        canonical = self._canonical_issues(view_text, spans)
+        issues.extend(canonical)
         if profile in _TOKEN_REVIEW_PROFILES:
-            issues.extend(self._unknown_token_issues(view_text, spans))
+            # A curated canonical match means we already know what is wrong
+            # here: token-level residue flags around it are pure noise.
+            suppress = [(i.start, i.end) for i in canonical]
+            issues.extend(self._unknown_token_issues(view_text, spans, suppress))
         return sorted(issues, key=lambda i: (i.start, i.end))
 
     def _canonical_issues(self, view_text: str, spans) -> list[Issue]:
@@ -100,10 +104,12 @@ class ThaiAnalyzer:
                 )
         return issues
 
-    def _unknown_token_issues(self, view_text: str, spans) -> list[Issue]:
+    def _unknown_token_issues(
+        self, view_text: str, spans, suppress: list[tuple[int, int]]
+    ) -> list[Issue]:
         issues: list[Issue] = []
         toks = self._tokenize(view_text)
-        claimed: list[tuple[int, int]] = []
+        claimed: list[tuple[int, int]] = list(suppress)
 
         # Cluster pass: merge an unknown token with adjacent tokens when the
         # merged form has dictionary-backed candidates (newmm often splits a
@@ -116,6 +122,7 @@ class ThaiAnalyzer:
                 and not _is_mask_fragment(token)
                 and token not in self._known
                 and not any(sp.start <= start < sp.end for sp in spans)
+                and not any(cs <= start < ce for cs, ce in claimed)
             ):
                 cluster = self._cluster_around(toks, i)
                 if cluster is not None:

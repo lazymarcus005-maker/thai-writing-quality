@@ -26,22 +26,37 @@ class WritingEngine:
 
     def __init__(self, config: GlossaryConfig | None = None) -> None:
         self._config = config or default_config()
+        # Analyzer bundles are expensive (62k-word Trie) — build once per
+        # distinct request-glossary, not per call. Shared read-only across
+        # threads (benign race: worst case one duplicate build).
+        self._bundles: dict[
+            tuple, tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer]
+        ] = {}
 
     # -- shared context -----------------------------------------------------
     def _context(
         self, profile: str, glossary: list[str] | None
-    ) -> tuple[GlossaryView, ProtectionEngine]:
-        view = GlossaryView(self._config, request_terms=glossary)
-        return view, ProtectionEngine(protect_terms=view.protect_terms())
+    ) -> tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer]:
+        key = tuple(sorted(glossary or []))
+        if key not in self._bundles:
+            view = GlossaryView(self._config, request_terms=glossary)
+            protection = ProtectionEngine(protect_terms=view.protect_terms())
+            self._bundles[key] = (view, protection, ThaiAnalyzer(view), EnglishAnalyzer(view))
+        return self._bundles[key]
 
     def _issues(
-        self, text: str, glossary_view: GlossaryView, spans: list[ProtectedSpan], profile: str
+        self,
+        text: str,
+        analyzers: tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer],
+        spans: list[ProtectedSpan],
+        profile: str,
     ) -> list[Issue]:
         analysis_view = build_analysis_view(text, spans)
+        _view, _protection, thai, english = analyzers
         issues: list[Issue] = []
         issues.extend(UnicodeInspector().inspect(analysis_view.text, spans))
-        issues.extend(ThaiAnalyzer(glossary_view).analyze(analysis_view.text, spans, profile))
-        issues.extend(EnglishAnalyzer(glossary_view).analyze(analysis_view.text, spans, profile))
+        issues.extend(thai.analyze(analysis_view.text, spans, profile))
+        issues.extend(english.analyze(analysis_view.text, spans, profile))
         unique: dict[str, Issue] = {}
         for issue in sorted(issues, key=lambda i: (i.start, i.end, i.rule_id)):
             unique.setdefault(issue.id, issue)
@@ -51,9 +66,9 @@ class WritingEngine:
     def analyze(
         self, text: str, *, profile: str = "technical", glossary: list[str] | None = None
     ) -> dict:
-        glossary_view, protection = self._context(profile, glossary)
+        glossary_view, protection, _thai, _english = self._context(profile, glossary)
         spans = protection.find_spans(text)
-        issues = self._issues(text, glossary_view, spans, profile)
+        issues = self._issues(text, self._context(profile, glossary), spans, profile)
         by_category = dict(Counter(i.category for i in issues))
         return {
             **versions_block(glossary_view.dictionary_version()),
@@ -72,9 +87,9 @@ class WritingEngine:
         max_changes: int = 10,
         glossary: list[str] | None = None,
     ) -> dict:
-        glossary_view, protection = self._context(profile, glossary)
+        glossary_view, protection, _thai, _english = self._context(profile, glossary)
         spans = protection.find_spans(text)
-        issues = self._issues(text, glossary_view, spans, profile)
+        issues = self._issues(text, self._context(profile, glossary), spans, profile)
         planner = PatchPlanner()
         patches = planner.plan(text, issues, max_changes, protected_spans=spans)
 
