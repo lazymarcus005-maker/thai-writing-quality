@@ -1,0 +1,325 @@
+{
+  "captured_at": "2026-10-11T05:05:18.196229+00:00",
+  "server_info": {
+    "name": "thai-writing-quality",
+    "version": "0.1.0"
+  },
+  "advertised_tools": [
+    "thai_analyze",
+    "thai_correct",
+    "thai_validate"
+  ],
+  "client": "mcp python sdk (mcp==2.3.0) over stdio",
+  "calls": [
+    {
+      "label": "analyze_mixed",
+      "tool": "thai_analyze",
+      "request": {
+        "text": "ขออนุญาติ deploy API ไป production",
+        "profile": "technical"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "original": "ขออนุญาติ deploy API ไป production",
+        "protected_spans": [
+          {
+            "start": 10,
+            "end": 16,
+            "kind": "glossary_term"
+          },
+          {
+            "start": 17,
+            "end": 20,
+            "kind": "identifier"
+          },
+          {
+            "start": 24,
+            "end": 34,
+            "kind": "glossary_term"
+          }
+        ],
+        "issues": [
+          {
+            "id": "spelling.canonical@2",
+            "rule_id": "spelling.canonical",
+            "category": "spelling",
+            "severity": "medium",
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "suggestions": [
+              {
+                "text": "อนุญาต",
+                "confidence": null,
+                "source": "canonical_dictionary"
+              }
+            ],
+            "message": "known misspelling; canonical form is 'อนุญาต'",
+            "protected": false,
+            "requires_review": false
+          }
+        ],
+        "summary": {
+          "count": 1,
+          "by_category": {
+            "spelling": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "correct_suggest",
+      "tool": "thai_correct",
+      "request": {
+        "text": "ขออนุญาติ deploy API ไป production"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "original": "ขออนุญาติ deploy API ไป production",
+        "corrected": "ขออนุญาต deploy API ไป production",
+        "patches": [
+          {
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "replacement": "อนุญาต",
+            "applied": false,
+            "reason": "spelling.canonical"
+          }
+        ],
+        "issues": [
+          {
+            "id": "spelling.canonical@2",
+            "rule_id": "spelling.canonical",
+            "category": "spelling",
+            "severity": "medium",
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "suggestions": [
+              {
+                "text": "อนุญาต",
+                "confidence": null,
+                "source": "canonical_dictionary"
+              }
+            ],
+            "message": "known misspelling; canonical form is 'อนุญาต'",
+            "protected": false,
+            "requires_review": false
+          }
+        ],
+        "requires_review": true,
+        "validation": {
+          "ok": true,
+          "violations": [],
+          "protected_spans_checked": 3
+        },
+        "summary": "1 patch(es) suggested; 1 issue(s) found. Review before applying."
+      }
+    },
+    {
+      "label": "correct_safe_apply",
+      "tool": "thai_correct",
+      "request": {
+        "text": "ขออนุญาติ deploy API ไป production",
+        "mode": "safe_apply"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "original": "ขออนุญาติ deploy API ไป production",
+        "corrected": "ขออนุญาต deploy API ไป production",
+        "patches": [
+          {
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "replacement": "อนุญาต",
+            "applied": true,
+            "reason": "spelling.canonical"
+          }
+        ],
+        "issues": [
+          {
+            "id": "spelling.canonical@2",
+            "rule_id": "spelling.canonical",
+            "category": "spelling",
+            "severity": "medium",
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "suggestions": [
+              {
+                "text": "อนุญาต",
+                "confidence": null,
+                "source": "canonical_dictionary"
+              }
+            ],
+            "message": "known misspelling; canonical form is 'อนุญาต'",
+            "protected": false,
+            "requires_review": false
+          }
+        ],
+        "requires_review": false,
+        "validation": {
+          "ok": true,
+          "violations": [],
+          "protected_spans_checked": 3
+        },
+        "summary": "1/1 patch(es) applied; 1 issue(s) found."
+      }
+    },
+    {
+      "label": "validate_warn",
+      "tool": "thai_validate",
+      "request": {
+        "text": "ขออนุญาติ deploy API ไป production"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "status": "WARN",
+        "issues": [
+          {
+            "id": "spelling.canonical@2",
+            "rule_id": "spelling.canonical",
+            "category": "spelling",
+            "severity": "medium",
+            "start": 2,
+            "end": 9,
+            "original": "อนุญาติ",
+            "suggestions": [
+              {
+                "text": "อนุญาต",
+                "confidence": null,
+                "source": "canonical_dictionary"
+              }
+            ],
+            "message": "known misspelling; canonical form is 'อนุญาต'",
+            "protected": false,
+            "requires_review": false
+          }
+        ],
+        "protected_integrity": true,
+        "summary": {
+          "count": 1,
+          "by_category": {
+            "spelling": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "validate_fail_bidi",
+      "tool": "thai_validate",
+      "request": {
+        "text": "สวัสดี ‮ ครับ"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "status": "FAIL",
+        "issues": [
+          {
+            "id": "unicode.bidi_control@7",
+            "rule_id": "unicode.bidi_control",
+            "category": "unicode",
+            "severity": "high",
+            "start": 7,
+            "end": 8,
+            "original": "‮",
+            "suggestions": [
+              {
+                "text": "",
+                "confidence": null,
+                "source": "unicode.bidi_control"
+              }
+            ],
+            "message": "directional formatting character RLO can silently reorder displayed text",
+            "protected": false,
+            "requires_review": false
+          }
+        ],
+        "protected_integrity": true,
+        "summary": {
+          "count": 1,
+          "by_category": {
+            "unicode": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "validate_pass",
+      "tool": "thai_validate",
+      "request": {
+        "text": "ประมวลผลคำขอเรียบร้อยแล้ว",
+        "profile": "general"
+      },
+      "is_error": false,
+      "structured_content": {
+        "schema_version": "1.0",
+        "engine_version": "0.1.0",
+        "dictionary_version": "1.0+31b0fcea6edb",
+        "status": "PASS",
+        "issues": [],
+        "protected_integrity": true,
+        "summary": {
+          "count": 0,
+          "by_category": {}
+        }
+      }
+    },
+    {
+      "label": "error_oversized",
+      "tool": "thai_analyze",
+      "request": {
+        "text": "<50001 code points>"
+      },
+      "is_error": false,
+      "structured_content": {
+        "error": {
+          "code": "TOO_LARGE",
+          "message": "text exceeds the 50000 code point limit",
+          "retryable": false,
+          "details": {
+            "limit": 50000,
+            "actual": 50001
+          }
+        },
+        "summary": "error: TOO_LARGE"
+      }
+    },
+    {
+      "label": "error_invalid_empty",
+      "tool": "thai_analyze",
+      "request": {
+        "text": ""
+      },
+      "is_error": false,
+      "structured_content": {
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "text must be a non-empty string",
+          "retryable": false,
+          "details": {
+            "field": "text"
+          }
+        },
+        "summary": "error: INVALID_INPUT"
+      }
+    }
+  ]
+}
