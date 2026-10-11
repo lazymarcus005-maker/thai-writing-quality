@@ -2,3 +2,5 @@
 
 - 2026-10-11: Specification, handoff, evaluation plan and initial fixtures created. Implementation has **not** started.
 - 2026-10-11 (T-001): Scaffold complete. Handoff docs moved out of nested staging (`docs/docs/*` -> `docs/`, fixtures -> `tests/fixtures/`, skill -> `skills/`). Package `thai_writing_mcp` under `src/` layout, editable install verified, lint/type/test pass locally. CI workflow added (lint, mypy, pytest on 3.11/3.12). Pinned deps validated against current official APIs — see docs/test-results.md.
+- 2026-10-11 (T-002..T-008): Core engine complete — schemas/errors, protected-span lexer, layered glossary, Unicode inspector, Thai + English analyzers, patch generator + invariant verifier. All unit-tested (110 tests green).
+- 2026-10-11 (T-009): **Gate A passed.** Three tools (`thai_analyze`, `thai_correct`, `thai_validate`) served over stdio via MCPServer 2.x and invoked by a real MCP SDK client (subprocess). Evidence: docs/evidence/gate-a/gate-a-transcript.json. FR-012 invocation cap verified end-to-end (TWQ_MAX_INVOCATIONS=3 -> 4th call RULE_FAILURE).

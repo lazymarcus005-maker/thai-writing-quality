@@ -15,3 +15,14 @@ Record commands, versions, environment, stdout summary, failures and trace evide
   - `.venv/bin/python -m pytest tests/unit/test_scaffold.py -q` — 4 passed
   - `.venv/bin/python -m ruff check src tests` — All checks passed
   - `.venv/bin/python -m mypy src/thai_writing_mcp` — no issues in 5 source files
+
+## 2026-10-11 — T-002..T-009 (Gate A)
+
+- `.venv/bin/python -m pytest tests -q` — 127 passed (unit + integration)
+- `.venv/bin/python -m ruff check src tests scripts` — clean
+- `.venv/bin/python -m mypy src/thai_writing_mcp` — no issues in 19 source files
+- Real-client smoke (Gate A evidence): `scripts/capture_gate_a.py`
+  - server: `python -m thai_writing_mcp.server` (stdio, mcp==2.3.0)
+  - client: `mcp.ClientSession` + `stdio_client` (subprocess) — initialize, list_tools, 8 calls
+  - results: analyze/correct(suggest+safe_apply)/validate(PASS+WARN+FAIL) all structured; TOO_LARGE + INVALID_INPUT returned as stable codes (see transcript JSON)
+- Notable API findings (mcp 2.3.0): `CallToolResult.is_error` (not isError), `Tool.input_schema`, `InitializeResult.server_info`; argument schema validation happens server-side pre-handler (enum violations are protocol errors, not EngineError)
