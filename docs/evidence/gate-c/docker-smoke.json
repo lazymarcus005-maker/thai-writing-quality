@@ -1,0 +1,13 @@
+{
+  "container": "thai-writing-quality:0.1.0",
+  "transport": "streamable HTTP via real MCP client",
+  "tools": [
+    "thai_analyze",
+    "thai_correct",
+    "thai_rewrite",
+    "thai_validate"
+  ],
+  "corrected": "ขออนุญาต deploy API ไป production",
+  "requires_review": true,
+  "validation_ok": true
+}

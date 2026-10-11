@@ -64,7 +64,9 @@ class WritingEngine:
     def _issues(
         self,
         text: str,
-        analyzers: tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer, StyleAnalyzer],
+        analyzers: tuple[
+            GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer, StyleAnalyzer
+        ],
         spans: list[ProtectedSpan],
         profile: str,
     ) -> list[Issue]:
