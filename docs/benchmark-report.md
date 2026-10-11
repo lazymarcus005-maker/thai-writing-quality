@@ -1,6 +1,6 @@
 # Benchmark Report (golden-v1)
 
-- Generated: 2026-10-11 12:20 +07
+- Generated: 2026-10-11 13:30 +07
 - Engine: `0.1.0` · schema `1.0` · dictionary `1.0+31b0fcea6edb`
 - Python 3.12.13 · macOS-26.6.2-arm64-arm-64bit
 - Dataset: 139 records, 5321 code points total
@@ -18,7 +18,7 @@
 | suggestion precision | 1.0000 | 0.95 | PASS ✅ |
 | detection recall | 1.0000 | 0.9 | PASS ✅ |
 | false-correction rate | 0.0000 | 0.01 | PASS ✅ |
-| p95 latency (ms) | 0.1133 | 200 | PASS ✅ |
+| p95 latency (ms) | 0.1143 | 200 | PASS ✅ |
 
 ## Detection detail
 
@@ -72,3 +72,22 @@ all metrics identical ✅
 2. **Coverage**: 139 records << 800 target; template families dominate several slices.
 3. **Latency**: measured in-process, warm, Apple Silicon; NFR-002 declares targets
    relative to reference hardware — numbers here are environment-specific.
+
+## Gate C — controlled comparison (T-016)
+
+Design: identical tasks (golden-v1 sample, n=40), dataset and prompts across
+conditions; 3 repeats; environment recorded (see
+`docs/evidence/gate-c/ab-benchmark.json`). Real results or explicit blocks —
+never invented numbers.
+
+| condition | status | detection P | detection R | p50 | p95 |
+|---|---|---|---|---|---|
+| mcp (engine via real MCP stdio client) | **run** | 1.0000 | 1.0000 | 0.76 ms | 0.93 ms |
+| base_llm | BLOCKED — no model credentials in this environment | — | — | — | — |
+| skill_only | BLOCKED — same credential blocker | — | — | — | — |
+| skill+MCP | BLOCKED — same credential blocker | — | — | — | — |
+
+The MCP-condition numbers include full subprocess + MCP-protocol round-trip
+overhead (not the in-process numbers above). Human adjudication of semantic
+preservation was not performed (no independent annotators available) and is
+recorded as an open requirement in the quality-evaluation protocol.

@@ -1,0 +1,42 @@
+{
+  "design": "identical tasks/dataset/prompts across conditions; 3 repeats",
+  "environment": {
+    "os": "macOS-26.6.2-arm64-arm-64bit",
+    "cpu": "arm",
+    "python": "3.12.13",
+    "engine": "0.1.0",
+    "mcp_sdk": "2.3.0",
+    "pythainlp": "5.4.0",
+    "captured_at": "2026-10-11T06:29:59.584229+00:00",
+    "input_lengths": "10..154 code points (golden-v1 sample)",
+    "cold_warm": "cold = first repeat, warm = repeats 2-3"
+  },
+  "conditions": [
+    {
+      "condition": "mcp",
+      "status": "run",
+      "repeats": 3,
+      "tasks_per_repeat": 40,
+      "detection_precision": 1.0,
+      "detection_recall": 1.0,
+      "p50_ms": 0.76,
+      "p95_ms": 0.93,
+      "transport": "stdio via mcp SDK client (subprocess)"
+    },
+    {
+      "condition": "base_llm",
+      "status": "BLOCKED",
+      "reason": "no model credentials available in this environment (claude CLI not logged in; no LLM API key provided). Stop condition: unavailable credentials for an optional remote service."
+    },
+    {
+      "condition": "skill_only",
+      "status": "BLOCKED",
+      "reason": "same credential blocker as base_llm"
+    },
+    {
+      "condition": "skill_mcp",
+      "status": "BLOCKED",
+      "reason": "same credential blocker as base_llm"
+    }
+  ]
+}

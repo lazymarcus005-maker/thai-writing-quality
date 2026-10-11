@@ -47,6 +47,21 @@ Contracts: [docs/tool-contracts.md](docs/tool-contracts.md). Spec: [docs/spec.md
 - **Zero outbound network requests** by default; the optional LLM adapter is off unless explicitly enabled.
 - Diagnostics go to stderr; tool responses are structured JSON plus a human summary.
 
+## Known limitations (honest status)
+
+- The golden dataset is **agent-curated** (139 records); the spec's >=800
+  independently human-annotated examples target is **not yet met**, so the
+  measured precision/recall numbers are optimistic bounds — see
+  [docs/benchmark-report.md](docs/benchmark-report.md).
+- The A/B comparison's LLM conditions (base LLM / skill-only / skill+MCP)
+  are **blocked on model credentials** in the build environment; only the
+  MCP condition is measured so far.
+- Gate B and Gate C are explicitly **not "production ready"**: no
+  independent threat review and no operational (load/restart/multi-tenant)
+  tests have been performed.
+- The real-host skill smoke ran through MCP Inspector; a logged-in
+  Claude Code end-to-end transcript is still outstanding (CLI login).
+
 ## Repository layout
 
 ```
