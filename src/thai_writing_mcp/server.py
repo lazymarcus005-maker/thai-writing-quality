@@ -19,11 +19,13 @@ from mcp.server.mcpserver import MCPServer
 
 from thai_writing_mcp import __version__
 from thai_writing_mcp.core.pipeline import WritingEngine
+from thai_writing_mcp.engines.llm_adapter import LLMAdapter
 from thai_writing_mcp.schemas.errors import RULE_FAILURE, EngineError, error_dict
 from thai_writing_mcp.schemas.models import (
     AnalyzeRequest,
     CorrectRequest,
     Profile,
+    RewriteRequest,
     ValidateRequest,
 )
 from thai_writing_mcp.schemas.validate import validate_request
@@ -134,6 +136,37 @@ def build_server(
                 mode=req.mode,
                 max_changes=req.max_changes,
                 glossary=req.glossary,
+            )
+
+        return _guarded(cap, work)
+
+    @server.tool()
+    def thai_rewrite(
+        text: str,
+        profile: Profile = "technical",
+        preserve_meaning: bool = True,
+        glossary: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Reviewed rewriting proposals (P1). requires_review is always
+        true; never auto-published."""
+
+        def work() -> dict[str, Any]:
+            req = validate_request(
+                RewriteRequest,
+                {
+                    "text": text,
+                    "profile": profile,
+                    "preserve_meaning": preserve_meaning,
+                    "glossary": glossary,
+                },
+            )
+            adapter = LLMAdapter()  # disabled unless explicitly opted in via env
+            return engine.rewrite(
+                req.text,
+                profile=req.profile,
+                preserve_meaning=req.preserve_meaning,
+                glossary=req.glossary,
+                llm_adapter=adapter,
             )
 
         return _guarded(cap, work)

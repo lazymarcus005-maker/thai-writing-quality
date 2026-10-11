@@ -118,7 +118,8 @@ class ThaiAnalyzer:
         while i < len(toks):
             token, start, _end = toks[i]
             if (
-                _is_thai_token(token)
+                "\u0e46" not in token  # mai yamok belongs to the style analyzer
+                and _is_thai_token(token)
                 and not _is_mask_fragment(token)
                 and token not in self._known
                 and not any(sp.start <= start < sp.end for sp in spans)
@@ -140,6 +141,7 @@ class ThaiAnalyzer:
         for token, start, _end in toks:
             if (
                 len(token) < 2
+                or "\u0e46" in token  # mai yamok belongs to the style analyzer
                 or _is_mask_fragment(token)
                 or not _is_thai_token(token)
                 or token in self._known
