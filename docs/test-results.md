@@ -26,3 +26,12 @@ Record commands, versions, environment, stdout summary, failures and trace evide
   - client: `mcp.ClientSession` + `stdio_client` (subprocess) — initialize, list_tools, 8 calls
   - results: analyze/correct(suggest+safe_apply)/validate(PASS+WARN+FAIL) all structured; TOO_LARGE + INVALID_INPUT returned as stable codes (see transcript JSON)
 - Notable API findings (mcp 2.3.0): `CallToolResult.is_error` (not isError), `Tool.input_schema`, `InitializeResult.server_info`; argument schema validation happens server-side pre-handler (enum violations are protocol errors, not EngineError)
+
+## 2026-10-11 — Final full-suite run (all 16 tickets)
+
+- `.venv/bin/python -m pytest tests -q` — 115 passed (unit 59, integration 15, security 22, e2e 4, rewrite 15)
+- `.venv/bin/python -m ruff check src tests scripts` — clean
+- `.venv/bin/python -m mypy src/thai_writing_mcp` — no issues in 22 source files
+- CI (GitHub Actions, Python 3.11 + 3.12): **green on final head** (run 38118281766); two earlier red runs were the superseded pre-amend T-014 commit, not the merged state
+- Docker: image `thai-writing-quality:0.1.0` built; container smoke via real streamable-HTTP client (docs/evidence/gate-c/docker-smoke.json); unauthenticated request → 401
+- Benchmark: docs/benchmark-report.md (5/5 initial gates PASS on golden-v1; A/B MCP condition measured, LLM conditions BLOCKED on credentials)
