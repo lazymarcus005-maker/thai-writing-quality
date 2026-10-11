@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "misspellings": {
+    "อนุญาติ": "อนุญาต",
+    "อีเมล์": "อีเมล",
+    "แอปพลิเคชั่น": "แอปพลิเคชัน",
+    "พฤษจิกายน": "พฤศจิกายน",
+    "เว็บไซต": "เว็บไซต์"
+  },
+  "_note": "Curated seed of unambiguous, Royal-Institute-documented misspellings. The layered glossary's canonical rules merge on top at runtime."
+}
