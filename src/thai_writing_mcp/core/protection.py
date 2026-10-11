@@ -59,9 +59,7 @@ _RE_ROUTE = re.compile(_LB + r"/[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)+/?" + r"(?
 _RE_VERSIONY = re.compile(r"(?:^|/)(?:v\d+(?:[._]\d+)?|api|gateway|endpoint)(?:/|$)", re.IGNORECASE)
 _RE_EXT = re.compile(r"\.[A-Za-z0-9]{1,8}$")
 _RE_PATH = re.compile(
-    _LB
-    + r"(?:\./|\.\./|~/)?[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)+"
-    + r"(?![A-Za-z0-9_.-])"
+    _LB + r"(?:\./|\.\./|~/)?[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)+" + r"(?![A-Za-z0-9_.-])"
 )
 _RE_WINPATH = re.compile(_LB + r"[A-Za-z]:\\[^\s]+")
 _RE_DATE_ISO = re.compile(
@@ -78,16 +76,14 @@ _RE_NUMBER = re.compile(
 )
 
 _RE_IDENT = re.compile(
-    _LB
-    + r"(?:"
+    _LB + r"(?:"
     r"[A-Za-z_][A-Za-z0-9_]*_[A-Za-z0-9_]*"  # snake_case / SCREAMING_SNAKE
     r"|[a-z]+(?:[A-Z][a-z0-9]+)+[A-Za-z0-9]*"  # camelCase
     r"|[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+[A-Za-z0-9]*"  # PascalCase
     r"|[A-Z][A-Z0-9]{1,}"  # ACRONYM
     r"|[A-Za-z][A-Za-z0-9]*\d+[A-Za-z0-9]*"  # p95, v1, x86
     r"|[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+"  # dotted.name
-    r")"
-    + _RB
+    r")" + _RB
 )
 _RE_EMOJI = re.compile(
     "["
@@ -108,7 +104,7 @@ def _trim_url(match: re.Match[str]) -> tuple[int, int]:
 
 def _json_spans(text: str) -> list[tuple[int, int]]:
     spans: list[tuple[int, int]] = []
-    openings = [i for i, ch in enumerate(text) if ch in "{[" ][:_MAX_JSON_CANDIDATES]
+    openings = [i for i, ch in enumerate(text) if ch in "{["][:_MAX_JSON_CANDIDATES]
     for start in openings:
         close_char = "}" if text[start] == "{" else "]"
         depth = 0

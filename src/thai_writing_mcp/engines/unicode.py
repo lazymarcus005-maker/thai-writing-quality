@@ -45,12 +45,46 @@ _ZWJ, _ZWNJ = "\u200d", "\u200c"
 # Curated homoglyph map (Cyrillic/Greek look-alikes -> ASCII). Extended by
 # NFKC for fullwidth and other compatibility forms.
 _HOMOGLYPHS = {
-    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "х": "x", "у": "y", "і": "i",
-    "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H", "О": "O", "Р": "P",
-    "С": "C", "Т": "T", "Х": "X", "І": "I",
-    "ο": "o", "ν": "v", "α": "a", "ε": "e", "ι": "i", "κ": "k", "ρ": "p", "τ": "t",
-    "υ": "u", "σ": "s", "χ": "x", "Ο": "O", "Α": "A", "Ε": "E", "Τ": "T", "Ρ": "P",
-    "‑": "-", "–": "-", "—": "-", "−": "-",
+    "а": "a",
+    "е": "e",
+    "о": "o",
+    "р": "p",
+    "с": "c",
+    "х": "x",
+    "у": "y",
+    "і": "i",
+    "А": "A",
+    "В": "B",
+    "Е": "E",
+    "К": "K",
+    "М": "M",
+    "Н": "H",
+    "О": "O",
+    "Р": "P",
+    "С": "C",
+    "Т": "T",
+    "Х": "X",
+    "І": "I",
+    "ο": "o",
+    "ν": "v",
+    "α": "a",
+    "ε": "e",
+    "ι": "i",
+    "κ": "k",
+    "ρ": "p",
+    "τ": "t",
+    "υ": "u",
+    "σ": "s",
+    "χ": "x",
+    "Ο": "O",
+    "Α": "A",
+    "Ε": "E",
+    "Τ": "T",
+    "Ρ": "P",
+    "‑": "-",
+    "–": "-",
+    "—": "-",
+    "−": "-",
 }
 
 _RE_THAI_CONSONANT_RANGE = ("\u0e01", "\u0e2e")  # ก..ฮ
@@ -102,9 +136,7 @@ def _is_combining(ch: str) -> bool:
 
 def _is_emojiish(ch: str) -> bool:
     return (
-        "\U0001f000" <= ch <= "\U0001faff"
-        or "\u2600" <= ch <= "\u27bf"
-        or ch in ("\ufe0f", _ZWJ)
+        "\U0001f000" <= ch <= "\U0001faff" or "\u2600" <= ch <= "\u27bf" or ch in ("\ufe0f", _ZWJ)
     )
 
 
@@ -137,8 +169,10 @@ class UnicodeInspector:
                         start=i,
                         original=ch,
                         suggestions=[""],
-                        message=(f"directional formatting character {name} can silently "
-                                 "reorder displayed text"),
+                        message=(
+                            f"directional formatting character {name} can silently "
+                            "reorder displayed text"
+                        ),
                         requires_review=False,
                     )
                 )
@@ -164,11 +198,7 @@ class UnicodeInspector:
         run_start = -1
         run: list[str] = []
         for i, ch in enumerate(view + "\0"):  # sentinel flushes the run
-            if (
-                i < len(view)
-                and not _is_masked(view, i)
-                and (mapped := _ascii_skeleton(ch))
-            ):
+            if i < len(view) and not _is_masked(view, i) and (mapped := _ascii_skeleton(ch)):
                 if run_start < 0:
                     run_start = i
                 run.append(mapped)
@@ -210,8 +240,9 @@ class UnicodeInspector:
                             start=i,
                             original=ch,
                             suggestions=[""],
-                            message=(f"duplicate combining mark U+{ord(ch):04X} "
-                                     "stacked on the same base"),
+                            message=(
+                                f"duplicate combining mark U+{ord(ch):04X} stacked on the same base"
+                            ),
                             requires_review=True,
                         )
                     )
@@ -226,8 +257,10 @@ class UnicodeInspector:
                                 start=i,
                                 original=ch,
                                 suggestions=[],
-                                message=(f"combining mark U+{ord(ch):04X} attached "
-                                         "to a non-Thai base character"),
+                                message=(
+                                    f"combining mark U+{ord(ch):04X} attached "
+                                    "to a non-Thai base character"
+                                ),
                                 requires_review=True,
                             )
                         )
@@ -240,8 +273,10 @@ class UnicodeInspector:
                                 start=i,
                                 original=ch,
                                 suggestions=[],
-                                message=(f"combining mark U+{ord(ch):04X} has no "
-                                         "base character to attach to"),
+                                message=(
+                                    f"combining mark U+{ord(ch):04X} has no "
+                                    "base character to attach to"
+                                ),
                                 requires_review=True,
                             )
                         )
@@ -265,8 +300,10 @@ class UnicodeInspector:
                         start=i,
                         original=ch,
                         suggestions=[""],
-                        message=(f"invisible character {name} (U+{ord(ch):04X}) may "
-                                 "change copy/paste behavior"),
+                        message=(
+                            f"invisible character {name} (U+{ord(ch):04X}) may "
+                            "change copy/paste behavior"
+                        ),
                         requires_review=True,
                     )
                 )

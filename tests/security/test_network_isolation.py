@@ -31,7 +31,9 @@ class _SocketIsBlocked(socket.socket):
 @pytest.fixture()
 def no_network(monkeypatch):
     monkeypatch.setattr(socket, "socket", _SocketIsBlocked)
-    monkeypatch.setattr(socket, "create_connection", lambda *a, **k: (_ for _ in ()).throw(OSError("blocked")))
+    monkeypatch.setattr(
+        socket, "create_connection", lambda *a, **k: (_ for _ in ()).throw(OSError("blocked"))
+    )
     return None
 
 
@@ -77,4 +79,6 @@ async def test_stdio_server_with_blackhole_proxies(tmp_path) -> None:
             result = await session.call_tool(
                 "thai_analyze", {"text": "ขออนุญาติ deploy API ไป production"}
             )
-            assert result.structured_content["issues"], "engine must still work with egress blackholed"
+            assert result.structured_content["issues"], (
+                "engine must still work with egress blackholed"
+            )

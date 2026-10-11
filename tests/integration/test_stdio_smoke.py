@@ -67,9 +67,7 @@ async def test_gate_a_thai_correct_suggest_and_safe_apply() -> None:
         assert all(p["applied"] is False for p in data["patches"])
         assert data["validation"]["ok"] is True
 
-        safe = await s.call_tool(
-            "thai_correct", {"text": SAMPLE_TH, "mode": "safe_apply"}
-        )
+        safe = await s.call_tool("thai_correct", {"text": SAMPLE_TH, "mode": "safe_apply"})
         sdata = safe.structured_content
         assert sdata["corrected"] == sdata["corrected"]  # stable shape
         applied = [p for p in sdata["patches"] if p["applied"]]
@@ -81,9 +79,7 @@ async def test_gate_a_thai_validate_verdicts() -> None:
     async for s in _session():
         warn = await s.call_tool("thai_validate", {"text": SAMPLE_TH})
         assert warn.structured_content["status"] == "WARN"
-        fail = await s.call_tool(
-            "thai_validate", {"text": "สวัสดี \u202e ครับ"}
-        )
+        fail = await s.call_tool("thai_validate", {"text": "สวัสดี \u202e ครับ"})
         assert fail.structured_content["status"] == "FAIL"  # bidi control: deterministic
         clean = await s.call_tool(
             "thai_validate", {"text": "ประมวลผลคำขอเรียบร้อยแล้ว", "profile": "general"}

@@ -61,7 +61,10 @@ class TestUnicodeAttacks:
 
     def test_combining_stack_flagged_but_valid_thai_not(self, engine: WritingEngine) -> None:
         bad = "คำท" + "\u0e35" * 2 + "ี่ผิด"
-        assert any(i["rule_id"] == "unicode.duplicate_mark" for i in engine.analyze(bad, profile="general")["issues"])
+        assert any(
+            i["rule_id"] == "unicode.duplicate_mark"
+            for i in engine.analyze(bad, profile="general")["issues"]
+        )
         good = "ประโยคนี้ถูกต้องตามหลักการเขียนภาษาไทยทุกประการ"
         assert engine.analyze(good, profile="formal")["issues"] == []
 
@@ -82,9 +85,14 @@ class TestMarkdownAndFences:
         text = "ก่อน```python\nrespones\n```หลัง respones"
         result = engine.analyze(text, profile="technical")
         # The 'respones' inside the fence is protected; the one after is not.
-        assert any(i["original"] == "respones" and i["start"] > text.index("```", 3) for i in result["issues"])
+        assert any(
+            i["original"] == "respones" and i["start"] > text.index("```", 3)
+            for i in result["issues"]
+        )
         assert not any(
-            i["original"] == "respones" and i["start"] < text.rindex("```") - 10 and text[i["start"] - 1] == "\n"
+            i["original"] == "respones"
+            and i["start"] < text.rindex("```") - 10
+            and text[i["start"] - 1] == "\n"
             for i in result["issues"]
         )
 
@@ -110,7 +118,9 @@ class TestSecretsAndLogging:
         dumped = json.dumps(caplog.records, default=str)
         assert self.SECRET not in dumped
 
-    def test_secret_outside_code_gets_confusable_or_noop_not_echo_extra(self, engine: WritingEngine) -> None:
+    def test_secret_outside_code_gets_confusable_or_noop_not_echo_extra(
+        self, engine: WritingEngine
+    ) -> None:
         result = engine.correct(f"key คือ {chr(39)}{self.SECRET}{chr(39)} ปกติ", mode="safe_apply")
         # Whatever the linguistic analysis says, the secret survives intact
         # in corrected output (nothing invents or drops it).
@@ -132,7 +142,9 @@ class TestPathologicalInputs:
             "\\*" * 1_000 + " escaped \\* content",
         ],
     )
-    def test_pathological_inputs_terminate_with_structure(self, engine: WritingEngine, text) -> None:
+    def test_pathological_inputs_terminate_with_structure(
+        self, engine: WritingEngine, text
+    ) -> None:
         result = engine.analyze(text, profile="technical")
         assert result["original"] == text
         assert "issues" in result and "protected_spans" in result

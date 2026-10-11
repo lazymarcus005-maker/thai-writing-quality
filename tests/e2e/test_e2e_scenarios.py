@@ -4,13 +4,12 @@ Each scenario is a realistic document fragment combining several difficulty
 axes; assertions cover the full pipeline behavior a host would observe.
 """
 
+import os
 import sys
 
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-
-import os
 
 SCENARIO_RELEASE_NOTE = """# บันทึกประจำรุ่น 2.4.0
 
@@ -42,20 +41,34 @@ async def test_e2e_release_note_scenario() -> None:
     async with stdio_client(server_params()) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
-            analysis = (await _call(s, "thai_analyze", {"text": SCENARIO_RELEASE_NOTE})).structured_content
+            analysis = (
+                await _call(s, "thai_analyze", {"text": SCENARIO_RELEASE_NOTE})
+            ).structured_content
             originals = [i["original"] for i in analysis["issues"]]
             assert "อนุญาติ" in originals
             assert "respones" in originals
             # Everything protected survives analysis untouched.
-            for lit in ("/cxgateway/v1/payment-xapi", "120ms", "850ms",
-                        "https://docs.internal.example/release/2.4.0", "2026-10-11"):
+            for lit in (
+                "/cxgateway/v1/payment-xapi",
+                "120ms",
+                "850ms",
+                "https://docs.internal.example/release/2.4.0",
+                "2026-10-11",
+            ):
                 assert lit in analysis["original"]
 
-            correction = (await _call(s, "thai_correct", {"text": SCENARIO_RELEASE_NOTE})).structured_content
-            assert correction["corrected"].replace("อนุญาติ", "อนุญาต").replace("respones", "response") == correction["corrected"]
+            correction = (
+                await _call(s, "thai_correct", {"text": SCENARIO_RELEASE_NOTE})
+            ).structured_content
+            assert (
+                correction["corrected"].replace("อนุญาติ", "อนุญาต").replace("respones", "response")
+                == correction["corrected"]
+            )
             assert correction["validation"]["ok"] is True
 
-            verdict = (await _call(s, "thai_validate", {"text": SCENARIO_RELEASE_NOTE})).structured_content
+            verdict = (
+                await _call(s, "thai_validate", {"text": SCENARIO_RELEASE_NOTE})
+            ).structured_content
             assert verdict["status"] == "WARN"  # typos found, nothing deterministic-fail
 
 
@@ -64,16 +77,24 @@ async def test_e2e_incident_scenario_no_protected_damage() -> None:
     async with stdio_client(server_params()) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
-            safe = (await _call(s, "thai_correct", {
-                "text": SCENARIO_INCIDENT, "mode": "safe_apply"
-            })).structured_content
+            safe = (
+                await _call(s, "thai_correct", {"text": SCENARIO_INCIDENT, "mode": "safe_apply"})
+            ).structured_content
             # Protected literals byte-identical in output.
-            for lit in ("/cxutility/api/v2/orders", "HTTP 500", "`Connection refused (os error 111)`",
-                        "42", "Redis", "03:00-03:15"):
+            for lit in (
+                "/cxutility/api/v2/orders",
+                "HTTP 500",
+                "`Connection refused (os error 111)`",
+                "42",
+                "Redis",
+                "03:00-03:15",
+            ):
                 assert lit in safe["corrected"], f"protected literal damaged: {lit}"
             assert safe["validation"]["ok"] is True
             # A WARN (not FAIL): no deterministic structural anomaly present.
-            verdict = (await _call(s, "thai_validate", {"text": SCENARIO_INCIDENT})).structured_content
+            verdict = (
+                await _call(s, "thai_validate", {"text": SCENARIO_INCIDENT})
+            ).structured_content
             assert verdict["status"] in ("PASS", "WARN")
 
 

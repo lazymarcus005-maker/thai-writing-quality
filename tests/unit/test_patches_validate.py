@@ -82,9 +82,7 @@ class TestApplyPatches:
     def test_apply_and_unchanged_bytes_identical(self) -> None:
         text = "ขออนุญาติ deploy 🙂 ไป production ที่ีนี่"
         start = text.index("อนุญาติ")
-        patch = Patch(
-            start=start, end=start + len("อนุญาติ"), original="อนุญาติ", replacement="อนุญาต"
-        )
+        patch = Patch(start=start, end=start + len("อนุญาติ"), original="อนุญาติ", replacement="อนุญาต")
         out = apply_patches(text, [patch])
         assert out == "ขออนุญาต deploy 🙂 ไป production ที่ีนี่"
         # Byte-identical outside the patch (incl. combining marks + emoji).

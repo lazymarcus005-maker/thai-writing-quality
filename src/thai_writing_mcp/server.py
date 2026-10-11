@@ -98,6 +98,7 @@ def build_server(
         text: str, profile: Profile = "technical", glossary: list[str] | None = None
     ) -> dict[str, Any]:
         """Diagnose Thai/English mixed text: issues + protected spans. Never edits."""
+
         def work() -> dict[str, Any]:
             req = validate_request(
                 AnalyzeRequest, {"text": text, "profile": profile, "glossary": glossary}
@@ -115,6 +116,7 @@ def build_server(
         glossary: list[str] | None = None,
     ) -> dict[str, Any]:
         """Suggest minimal patches (default) or apply review-free ones (safe_apply)."""
+
         def work() -> dict[str, Any]:
             req = validate_request(
                 CorrectRequest,
@@ -141,6 +143,7 @@ def build_server(
         text: str, profile: Profile = "technical", glossary: list[str] | None = None
     ) -> dict[str, Any]:
         """Preflight verdict: PASS / WARN / FAIL. FAIL needs deterministic evidence."""
+
         def work() -> dict[str, Any]:
             req = validate_request(
                 ValidateRequest, {"text": text, "profile": profile, "glossary": glossary}

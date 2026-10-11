@@ -17,8 +17,12 @@ from thai_writing_mcp.core.validate import InvariantVerifier
 from thai_writing_mcp.engines.english import EnglishAnalyzer
 from thai_writing_mcp.engines.thai import ThaiAnalyzer
 from thai_writing_mcp.engines.unicode import UnicodeInspector
-from thai_writing_mcp.schemas.errors import RULE_FAILURE, EngineError
-from thai_writing_mcp.schemas.models import Issue, ProtectedSpan, versions_block
+from thai_writing_mcp.schemas.errors import (
+    PROTECTED_CONTENT_VIOLATION,
+    RULE_FAILURE,
+    EngineError,
+)
+from thai_writing_mcp.schemas.models import Issue, Patch, ProtectedSpan, versions_block
 
 
 class WritingEngine:
@@ -117,8 +121,7 @@ class WritingEngine:
         )
         applied_count = sum(1 for p in patches if p.applied)
         summary = (
-            f"{applied_count}/{len(patches)} patch(es) applied; "
-            f"{len(issues)} issue(s) found."
+            f"{applied_count}/{len(patches)} patch(es) applied; {len(issues)} issue(s) found."
             if mode == "safe_apply"
             else (
                 f"{len(patches)} patch(es) suggested; {len(issues)} issue(s) found. "
@@ -138,6 +141,81 @@ class WritingEngine:
                 "protected_spans_checked": len(spans),
             },
             "summary": summary,
+        }
+
+    def merge_external_proposals(
+        self,
+        text: str,
+        proposals: list[tuple[int, int, str, str, str]],
+        *,
+        profile: str = "technical",
+        glossary: list[str] | None = None,
+    ) -> dict:
+        """Route LLM (or any external) proposals through the deterministic gate.
+
+        Proposals never apply directly (security.md): each becomes a patch
+        that must pass preconditions, protected-span integrity, numeric
+        integrity, and the edit-ratio bound. Violating proposals are
+        declined loudly, never repaired.
+        """
+        glossary_view, protection, _thai, _english = self._context(profile, glossary)
+        spans = protection.find_spans(text)
+        PatchPlanner()
+        candidates: list[Patch] = []
+        for start, end, original, replacement, reason in proposals:
+            patch = Patch(
+                start=start,
+                end=end,
+                original=original,
+                replacement=replacement,
+                applied=False,
+                reason=f"llm:{reason}" if not reason.startswith("llm:") else reason,
+            )
+            if any(sp.start <= patch.start < sp.end for sp in spans):
+                continue  # inside a protected span: dropped outright
+            candidates.append(patch)
+        candidates.sort(key=lambda p: (p.start, p.end))
+        accepted: list[Patch] = []
+        declined: list[dict] = []
+        for patch in candidates:
+            if accepted and patch.start < accepted[-1].end:
+                declined.append({"patch": patch.model_dump(), "violation": "overlap"})
+                continue
+            if (
+                patch.start < 0
+                or patch.end > len(text)
+                or patch.original != text[patch.start : patch.end]
+            ):
+                declined.append({"patch": patch.model_dump(), "violation": "precondition"})
+                continue
+            accepted.append(patch)
+        try:
+            corrected = apply_patches(text, accepted)
+            verifier = InvariantVerifier().verify(
+                text, corrected, spans, accepted, numbers_authorized=False
+            )
+            violations = verifier.violations
+            if violations:
+                raise EngineError(
+                    PROTECTED_CONTENT_VIOLATION,
+                    "proposals violate invariants",
+                    details={"violations": violations},
+                )
+        except EngineError as exc:
+            # Fail closed: decline the whole batch rather than repair silently.
+            return {
+                "accepted": [],
+                "declined": declined + [{"batch": True, "violation": str(exc)}],
+                "corrected": text,
+                "requires_review": True,
+                "protected_spans_checked": len(spans),
+            }
+        return {
+            "accepted": [p.model_dump() for p in accepted],
+            "declined": declined,
+            "corrected": corrected,
+            "requires_review": True,  # external proposals ALWAYS require review
+            "protected_spans_checked": len(spans),
         }
 
     def validate(

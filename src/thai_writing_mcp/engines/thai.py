@@ -127,9 +127,9 @@ class ThaiAnalyzer:
                 cluster = self._cluster_around(toks, i)
                 if cluster is not None:
                     merged, cs, ce = cluster
-                    candidates = [
-                        c for c in spell(merged) if c != merged and c in self._known
-                    ][:_MAX_SUGGESTIONS]
+                    candidates = [c for c in spell(merged) if c != merged and c in self._known][
+                        :_MAX_SUGGESTIONS
+                    ]
                     issues.append(self._unknown_issue(merged, cs, candidates))
                     claimed.append((cs, ce))
                     i = next((j for j, (_, sx, _) in enumerate(toks) if sx >= ce), len(toks))

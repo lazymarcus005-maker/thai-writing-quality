@@ -25,7 +25,14 @@ class TestExampleGlossary:
         v = view_with()
         terms = v.protect_terms()
         for term in [
-            "API", "Redis", "Kubernetes", "Docker", "HttpClient", "p95", "cxgateway", "BICode"
+            "API",
+            "Redis",
+            "Kubernetes",
+            "Docker",
+            "HttpClient",
+            "p95",
+            "cxgateway",
+            "BICode",
         ]:
             assert term in terms, f"missing protect term: {term}"
 

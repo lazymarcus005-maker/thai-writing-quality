@@ -131,14 +131,17 @@ def score_once(engine: WritingEngine, records: list[dict], measure_latency: bool
     p50 = statistics.median(lat_sorted) if lat_sorted else 0.0
     p95 = lat_sorted[int(0.95 * (len(lat_sorted) - 1))] if lat_sorted else 0.0
     return {
-        "tp": tp, "fp": fp, "fn": fn,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
         "detection_precision": detection_precision,
         "detection_recall": detection_recall,
         "suggestion_precision": suggestion_precision,
         "false_correction_rate": false_rate,
         "protected_integrity": integrity,
         "offset_exact_match": offset_exact,
-        "p50_ms": p50, "p95_ms": p95,
+        "p50_ms": p50,
+        "p95_ms": p95,
         "latency_n": len(lat_sorted),
         "per_family": per_family,
     }
@@ -162,8 +165,14 @@ def main() -> None:
     run2 = score_once(engine, records, measure_latency=False)
     deterministic = {
         k: run1[k] == run2[k]
-        for k in ("detection_precision", "detection_recall", "suggestion_precision",
-                  "false_correction_rate", "protected_integrity", "offset_exact_match")
+        for k in (
+            "detection_precision",
+            "detection_recall",
+            "suggestion_precision",
+            "false_correction_rate",
+            "protected_integrity",
+            "offset_exact_match",
+        )
     }
 
     fam_lines = "| family | n | TP | FP | FN |\n|---|---|---|---|---|\n"
@@ -173,7 +182,7 @@ def main() -> None:
     total_chars = sum(len(r["text"]) for r in records)
     report = f"""# Benchmark Report (golden-v1)
 
-- Generated: {time.strftime('%Y-%m-%d %H:%M %Z')}
+- Generated: {time.strftime("%Y-%m-%d %H:%M %Z")}
 - Engine: `{__version__}` · schema `{SCHEMA_VERSION}` · dictionary `{dict_ver}`
 - Python {platform.python_version()} · {platform.platform()}
 - Dataset: {len(records)} records, {total_chars} code points total
@@ -187,20 +196,26 @@ def main() -> None:
 
 | gate | measured | target | verdict |
 |---|---|---|---|
-{gate_line('protected integrity', run1['protected_integrity'], GATES['protected_integrity'])}
-{gate_line('suggestion precision', run1['suggestion_precision'], GATES['suggestion_precision'])}
-{gate_line('detection recall', run1['detection_recall'], GATES['detection_recall'])}
-{gate_line('false-correction rate', run1['false_correction_rate'], GATES['false_correction'],
-           higher_is_better=False)}
-{gate_line('p95 latency (ms)', run1['p95_ms'], GATES['p95_latency_ms'], False)}
+{gate_line("protected integrity", run1["protected_integrity"], GATES["protected_integrity"])}
+{gate_line("suggestion precision", run1["suggestion_precision"], GATES["suggestion_precision"])}
+{gate_line("detection recall", run1["detection_recall"], GATES["detection_recall"])}
+{
+        gate_line(
+            "false-correction rate",
+            run1["false_correction_rate"],
+            GATES["false_correction"],
+            higher_is_better=False,
+        )
+    }
+{gate_line("p95 latency (ms)", run1["p95_ms"], GATES["p95_latency_ms"], False)}
 
 ## Detection detail
 
-- TP {run1['tp']} · FP {run1['fp']} · FN {run1['fn']}
-- detection precision: **{run1['detection_precision']:.4f}**
-- offset exact-match (vs str.find oracle): **{run1['offset_exact_match']:.4f}**
-- latency p50 **{run1['p50_ms']:.2f} ms** / p95 **{run1['p95_ms']:.2f} ms**
-over {run1['latency_n']} warm calls
+- TP {run1["tp"]} · FP {run1["fp"]} · FN {run1["fn"]}
+- detection precision: **{run1["detection_precision"]:.4f}**
+- offset exact-match (vs str.find oracle): **{run1["offset_exact_match"]:.4f}**
+- latency p50 **{run1["p50_ms"]:.2f} ms** / p95 **{run1["p95_ms"]:.2f} ms**
+over {run1["latency_n"]} warm calls
 
 ## Per-family slice
 
@@ -208,7 +223,7 @@ over {run1['latency_n']} warm calls
 ## Determinism (FR-015)
 
 Two consecutive runs over the pinned engine + dictionary `{dict_ver}`:
-{'all metrics identical ✅' if all(deterministic.values()) else 'MISMATCH ❌ ' + str(deterministic)}
+{"all metrics identical ✅" if all(deterministic.values()) else "MISMATCH ❌ " + str(deterministic)}
 
 ## Known limitations
 
