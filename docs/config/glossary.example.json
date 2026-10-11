@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "global": {
+    "protect": [
+      "API",
+      "Redis",
+      "Kubernetes",
+      "Docker",
+      "OpenTelemetry",
+      "HttpClient",
+      "p95",
+      "JSON",
+      "MCP"
+    ],
+    "canonical": {
+      "อนุญาติ": "อนุญาต"
+    }
+  },
+  "domain": {
+    "software": {
+      "protect": [
+        "YARP",
+        "Middleware",
+        "Gateway",
+        "deploy",
+        "production",
+        "timeout",
+        "reproduce"
+      ]
+    }
+  },
+  "project": {
+    "protect": [
+      "cxgateway",
+      "cxutility",
+      "BICode",
+      "INSMaster",
+      "cxntlappux"
+    ]
+  }
+}

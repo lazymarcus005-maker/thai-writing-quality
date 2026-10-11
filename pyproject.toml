@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thai-writing-mcp"
+version = "0.1.0"
+description = "Local-first MCP server for Thai-English technical writing quality: spelling, Unicode safety, protected spans, minimal patches."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Thai Writing Quality contributors" }]
+keywords = ["mcp", "thai", "nlp", "writing-quality", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    # Pinned exact versions: validated against their current official APIs (see docs/test-results.md).
+    "mcp==2.3.0",
+    "pythainlp==5.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+    "pytest-asyncio==1.3.0",
+    "ruff==0.14.5",
+    "mypy==1.19.0",
+]
+
+[project.scripts]
+thai-writing-mcp = "thai_writing_mcp.server:main"
+
+[project.urls]
+Repository = "https://github.com/lazymarcus005-maker/thai-writing-quality"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+thai_writing_mcp = ["py.typed", "config/data/*.txt", "config/data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_unused_ignores = true
+check_untyped_defs = true
+mypy_path = "src"

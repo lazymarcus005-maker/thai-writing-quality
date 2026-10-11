@@ -1,0 +1,10 @@
+{"id": "th-spell-001", "text": "ขออนุญาติแจ้งผลการดำเนินงาน", "profile": "formal", "expected_behavior": "suggest", "expected_issues": ["อนุญาติ"], "protected_literals": []}
+{"id": "mix-001", "text": "ขออนุญาติ deploy API ไป production", "profile": "technical", "expected_behavior": "suggest", "expected_issues": ["อนุญาติ"], "protected_literals": ["deploy", "API", "production"]}
+{"id": "mix-002", "text": "ตรวจสอบ respones จาก API", "profile": "technical", "expected_behavior": "suggest", "expected_issues": ["respones"], "protected_literals": ["API"]}
+{"id": "guard-001", "text": "เรียก /cxgateway/v1/member-xapi แล้วได้ HTTP 500", "profile": "technical", "expected_behavior": "no-protected-change", "expected_issues": [], "protected_literals": ["/cxgateway/v1/member-xapi", "500"]}
+{"id": "guard-002", "text": "ใช้ `HttpClient` และ timeout 2s", "profile": "technical", "expected_behavior": "no-protected-change", "expected_issues": [], "protected_literals": ["`HttpClient`", "2s"]}
+{"id": "clean-001", "text": "ฐานข้อมูล Redis ทำงานช้า", "profile": "technical", "expected_behavior": "no-change", "expected_issues": [], "protected_literals": ["Redis"]}
+{"id": "clean-002", "text": "ประมวลผลคำขอเรียบร้อยแล้ว", "profile": "general", "expected_behavior": "no-change", "expected_issues": [], "protected_literals": []}
+{"id": "guard-003", "text": "{\"BICode\":\"TH01\",\"count\":500}", "profile": "technical", "expected_behavior": "no-change", "expected_issues": [], "protected_literals": ["BICode", "TH01", "500"]}
+{"id": "sem-001", "text": "ผู้ป่วยมีอาการแย่ลงหลังได้รับยา", "profile": "formal", "expected_behavior": "no-meaning-change", "expected_issues": [], "protected_literals": ["แย่ลง"]}
+{"id": "unicode-001", "text": "ทดสอบภาษาไทย🙂 และ API", "profile": "technical", "expected_behavior": "preserve-codepoint-offsets", "expected_issues": [], "protected_literals": ["🙂", "API"]}
