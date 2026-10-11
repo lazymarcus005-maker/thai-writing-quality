@@ -9,13 +9,8 @@ from __future__ import annotations
 from collections import Counter
 
 from thai_writing_mcp.config.glossary import GlossaryConfig, GlossaryView, default_config
-from thai_writing_mcp.core.issues import make_issue
 from thai_writing_mcp.core.offsets import build_analysis_view
-from thai_writing_mcp.core.patches import (
-    DEFAULT_MAX_EDIT_RATIO,
-    PatchPlanner,
-    apply_patches,
-)
+from thai_writing_mcp.core.patches import PatchPlanner, apply_patches
 from thai_writing_mcp.core.patches import _bounded_levenshtein as _edit_size
 from thai_writing_mcp.core.protection import ProtectionEngine
 from thai_writing_mcp.core.validate import InvariantVerifier
@@ -125,15 +120,23 @@ class WritingEngine:
             raise EngineError(RULE_FAILURE, f"unknown mode {mode!r}")
 
         applied_rules = set()
+        verify_patches = patches
         if mode == "safe_apply":
             review_positions = {(i.start, i.end) for i in issues if i.requires_review}
+            verify_patches = []
             for p in patches:
                 p.applied = (p.start, p.end) not in review_positions
                 if p.applied:
                     applied_rules.add(p.reason)
+                    verify_patches.append(p)
+            # Verify against exactly what was applied: review-declined patches
+            # are intentionally absent from `corrected`, so including them
+            # would fabricate an output_mismatch.
 
         verifier = InvariantVerifier()
-        validation = verifier.verify(text, corrected, spans, patches, numbers_authorized=False)
+        validation = verifier.verify(
+            text, corrected, spans, verify_patches, numbers_authorized=False
+        )
         requires_review = any(i.requires_review for i in issues) or (
             mode == "suggest" and bool(patches)
         )
@@ -304,11 +307,10 @@ class WritingEngine:
         if not verification.ok:
             proposed = text  # never publish an unverified proposal
 
-        if preserve_meaning and llm_merged and llm_merged["accepted"]:
-            # Accepted LLM patches are proposals only; surface them as
-            # additional patches (never auto-spliced into `proposed`).
-            for ap in llm_merged["accepted"]:
-                patches.append(Patch(**ap))
+        # Accepted LLM patches stay OUT of `patches` on purpose: the contract
+        # invariant requires the returned patch list to exactly express
+        # `proposed`, and LLM proposals are review-only (never spliced).
+        llm_accepted = llm_merged["accepted"] if llm_merged else []
 
         summary = (
             f"{len(safe)} patch(es) proposed, {len(risky)} withheld as meaning-risk; "
@@ -328,6 +330,7 @@ class WritingEngine:
                 "preserve_meaning": preserve_meaning,
             },
             "llm_status": llm_status,
+            "llm_proposals": {"accepted": len(llm_accepted), "spliced": 0},
             "summary": summary,
         }
 
@@ -342,8 +345,10 @@ class WritingEngine:
             i["severity"] == "high" and not i["requires_review"] for i in issues
         )
         status = "FAIL" if deterministic_fail else ("WARN" if issues else "PASS")
+        # Input-side integrity: validate() never edits, so the protected
+        # spans of the INPUT are trivially intact (true by construction).
         return {
-            **{k: v for k, v in result.items() if k.startswith(("schema", "engine", "dictionary"))},
+            **versions_block(result["dictionary_version"]),
             "status": status,
             "issues": issues,
             "protected_integrity": True,
@@ -352,10 +357,3 @@ class WritingEngine:
                 "by_category": result["summary"]["by_category"],
             },
         }
-
-
-def make_issue_public() -> None:  # pragma: no cover - re-export helper for typing
-    _ = make_issue
-
-
-_ = DEFAULT_MAX_EDIT_RATIO  # re-exported for adapters

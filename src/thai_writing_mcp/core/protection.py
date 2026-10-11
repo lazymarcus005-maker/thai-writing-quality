@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import json
 import re
-import unicodedata
 
 from thai_writing_mcp.schemas.models import ProtectedSpan
 
@@ -226,7 +225,3 @@ class ProtectionEngine:
         return sorted(accepted, key=lambda s: (s.start, s.end))
 
 
-def is_thai_char(ch: str) -> bool:
-    if _RE_THAI.match(ch):
-        return True
-    return "\u0e00" <= ch <= "\u0e7f" and unicodedata.category(ch) in ("Mn", "Mc")

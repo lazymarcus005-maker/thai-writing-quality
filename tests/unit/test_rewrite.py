@@ -127,7 +127,8 @@ class TestSemanticGate:
 
 class TestGuardrails:
     def test_accepted_llm_patches_are_review_only_not_spliced(self) -> None:
-        # A *legitimate* LLM proposal must not be auto-spliced either.
+        # A *legitimate* LLM proposal must not be auto-spliced either; and the
+        # returned `patches` must express exactly `proposed` (deterministic).
         import json
 
         def provider(method, url, headers, body, timeout):
@@ -147,12 +148,18 @@ class TestGuardrails:
             return 200, json.dumps({"choices": [{"message": {"content": content}}]}).encode()
 
         adapter = LLMAdapter(env=OPT_IN, transport=provider)
-        out = rewrite("respones จากระบบ", profile="technical", llm_adapter=adapter)
+        text = "respones จากระบบ"
+        out = rewrite(text, profile="technical", llm_adapter=adapter)
         assert out["llm_status"] == "ok"
         assert out["requires_review"] is True
-        llm_patches = [p for p in out["patches"] if p["reason"].startswith("llm:")]
-        assert llm_patches
-        assert all(ap["applied"] is False for ap in llm_patches)
+        assert out["llm_proposals"] == {"accepted": 1, "spliced": 0}
+        # No llm patches leak into `patches`; patches still express `proposed`.
+        assert not [p for p in out["patches"] if p["reason"].startswith("llm:")]
+        spliced = text
+        for p in sorted(out["patches"], key=lambda x: x["start"]):
+            assert spliced[p["start"] : p["end"]] == p["original"]
+            spliced = spliced[: p["start"]] + p["replacement"] + spliced[p["end"] :]
+        assert spliced == out["proposed"]
 
     def test_max_edit_ratio_abstains(self) -> None:
         # Many long patches on a short text push the total ratio past 0.3:

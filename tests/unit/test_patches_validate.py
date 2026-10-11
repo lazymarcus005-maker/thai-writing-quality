@@ -189,3 +189,17 @@ class TestInvariantVerifier:
         patches = planner.plan(text, issues, max_changes=10)
         out = planner.apply_safe(text, patches, issues)
         assert out == "response และอนุญาติ"  # review patch NOT applied
+
+
+class TestSafeApplyValidationRegression:
+    def test_safe_apply_with_review_and_safe_issues_validates_true(self) -> None:
+        """Review-declined patches must not fabricate an output_mismatch
+        (code-review finding: verifier saw all patches, not applied ones)."""
+        from thai_writing_mcp.core.pipeline import WritingEngine
+
+        engine = WritingEngine()
+        text = "ตรวจสอบ respones กับอาจารยครับ"
+        out = engine.correct(text, profile="formal", mode="safe_apply")
+        assert out["validation"]["ok"] is True, out["validation"]["violations"]
+        assert "response" in out["corrected"]  # safe patch applied
+        assert "อาจารย" in out["corrected"]  # review patch correctly declined

@@ -94,9 +94,17 @@ class HardeningMiddleware:
                 status_code=403,
             )(scope, receive, send)
             return
-        # 3. Request size cap.
+        # 3. Request size cap (malformed header -> 400, never a raw 500).
         length = request.headers.get("content-length")
-        if length and int(length) > self.config.max_body_bytes:
+        try:
+            too_large = length is not None and int(length) > self.config.max_body_bytes
+        except ValueError:
+            await JSONResponse(
+                {"error": "INVALID_INPUT", "message": "malformed Content-Length header"},
+                status_code=400,
+            )(scope, receive, send)
+            return
+        if too_large:
             await JSONResponse(
                 {"error": "payload_too_large", "message": "request body exceeds limit"},
                 status_code=413,
