@@ -22,11 +22,18 @@ npx @modelcontextprotocol/inspector --cli scripts/run_server_stdio.sh \
   --tool-arg "text=ขออนุญาติ deploy API ไป production"
 ```
 
-Honest scope note: the Inspector proves the **server side** of the host
-integration end-to-end (connect, schema negotiation, tool invocation,
-structured output). The **agent-side skill workflow** (validate → correct →
-max 2 passes) is fully specified in `skills/thai-writing-quality/SKILL.md`
-and integration-tested at the protocol level, but a logged-in Claude Code
-transcript executing the skill end-to-end is still outstanding until the
-CLI is authenticated — run `scripts/capture_gate_b_host_smoke.sh` again
-after `claude /login` to replace this caveat with a full transcript.
+## Full agent-side workflow — VERIFIED via opencode (2026-10-11)
+
+`opencode-host-smoke.json` records a complete real-host execution of the
+skill workflow: opencode CLI 1.18.34 (model `deepseek-v4-flash-vision-exp`)
+with the skill installed as project instructions and the MCP server
+attached via `opencode.json`. The host followed the workflow exactly —
+read → `thai_analyze` → `thai_correct` (2 tool passes, per the skill's
+max-passes rule) — and reported both typos (อนุญาติ, respones) with
+protected tokens byte-identical in the suggested corrected text.
+
+The Claude Code transcript above remains as an additional real-host
+connectivity artifact; the agent-side workflow requirement (Definition of
+Done: "one real host integration documented") is satisfied by the opencode
+evidence. Re-running `scripts/capture_gate_b_host_smoke.sh` after
+`claude /login` would add a second host for redundancy.
