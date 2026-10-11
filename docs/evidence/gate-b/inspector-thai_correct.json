@@ -1,0 +1,54 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"schema_version\": \"1.0\",\n  \"engine_version\": \"0.1.0\",\n  \"dictionary_version\": \"1.0+31b0fcea6edb\",\n  \"original\": \"ขออนุญาติ deploy API ไป production\",\n  \"corrected\": \"ขออนุญาต deploy API ไป production\",\n  \"patches\": [\n    {\n      \"start\": 2,\n      \"end\": 9,\n      \"original\": \"อนุญาติ\",\n      \"replacement\": \"อนุญาต\",\n      \"applied\": false,\n      \"reason\": \"spelling.canonical\"\n    }\n  ],\n  \"issues\": [\n    {\n      \"id\": \"spelling.canonical@2\",\n      \"rule_id\": \"spelling.canonical\",\n      \"category\": \"spelling\",\n      \"severity\": \"medium\",\n      \"start\": 2,\n      \"end\": 9,\n      \"original\": \"อนุญาติ\",\n      \"suggestions\": [\n        {\n          \"text\": \"อนุญาต\",\n          \"confidence\": null,\n          \"source\": \"canonical_dictionary\"\n        }\n      ],\n      \"message\": \"known misspelling; canonical form is 'อนุญาต'\",\n      \"protected\": false,\n      \"requires_review\": false\n    }\n  ],\n  \"requires_review\": true,\n  \"validation\": {\n    \"ok\": true,\n    \"violations\": [],\n    \"protected_spans_checked\": 3\n  },\n  \"summary\": \"1 patch(es) suggested; 1 issue(s) found. Review before applying.\"\n}"
+    }
+  ],
+  "structuredContent": {
+    "schema_version": "1.0",
+    "engine_version": "0.1.0",
+    "dictionary_version": "1.0+31b0fcea6edb",
+    "original": "ขออนุญาติ deploy API ไป production",
+    "corrected": "ขออนุญาต deploy API ไป production",
+    "patches": [
+      {
+        "start": 2,
+        "end": 9,
+        "original": "อนุญาติ",
+        "replacement": "อนุญาต",
+        "applied": false,
+        "reason": "spelling.canonical"
+      }
+    ],
+    "issues": [
+      {
+        "id": "spelling.canonical@2",
+        "rule_id": "spelling.canonical",
+        "category": "spelling",
+        "severity": "medium",
+        "start": 2,
+        "end": 9,
+        "original": "อนุญาติ",
+        "suggestions": [
+          {
+            "text": "อนุญาต",
+            "confidence": null,
+            "source": "canonical_dictionary"
+          }
+        ],
+        "message": "known misspelling; canonical form is 'อนุญาต'",
+        "protected": false,
+        "requires_review": false
+      }
+    ],
+    "requires_review": true,
+    "validation": {
+      "ok": true,
+      "violations": [],
+      "protected_spans_checked": 3
+    },
+    "summary": "1 patch(es) suggested; 1 issue(s) found. Review before applying."
+  },
+  "isError": false
+}

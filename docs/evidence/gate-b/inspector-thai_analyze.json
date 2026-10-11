@@ -1,0 +1,59 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"schema_version\": \"1.0\",\n  \"engine_version\": \"0.1.0\",\n  \"dictionary_version\": \"1.0+31b0fcea6edb\",\n  \"original\": \"ขออนุญาติ deploy API ไป production\",\n  \"protected_spans\": [\n    {\n      \"start\": 10,\n      \"end\": 16,\n      \"kind\": \"glossary_term\"\n    },\n    {\n      \"start\": 17,\n      \"end\": 20,\n      \"kind\": \"identifier\"\n    },\n    {\n      \"start\": 24,\n      \"end\": 34,\n      \"kind\": \"glossary_term\"\n    }\n  ],\n  \"issues\": [\n    {\n      \"id\": \"spelling.canonical@2\",\n      \"rule_id\": \"spelling.canonical\",\n      \"category\": \"spelling\",\n      \"severity\": \"medium\",\n      \"start\": 2,\n      \"end\": 9,\n      \"original\": \"อนุญาติ\",\n      \"suggestions\": [\n        {\n          \"text\": \"อนุญาต\",\n          \"confidence\": null,\n          \"source\": \"canonical_dictionary\"\n        }\n      ],\n      \"message\": \"known misspelling; canonical form is 'อนุญาต'\",\n      \"protected\": false,\n      \"requires_review\": false\n    }\n  ],\n  \"summary\": {\n    \"count\": 1,\n    \"by_category\": {\n      \"spelling\": 1\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "schema_version": "1.0",
+    "engine_version": "0.1.0",
+    "dictionary_version": "1.0+31b0fcea6edb",
+    "original": "ขออนุญาติ deploy API ไป production",
+    "protected_spans": [
+      {
+        "start": 10,
+        "end": 16,
+        "kind": "glossary_term"
+      },
+      {
+        "start": 17,
+        "end": 20,
+        "kind": "identifier"
+      },
+      {
+        "start": 24,
+        "end": 34,
+        "kind": "glossary_term"
+      }
+    ],
+    "issues": [
+      {
+        "id": "spelling.canonical@2",
+        "rule_id": "spelling.canonical",
+        "category": "spelling",
+        "severity": "medium",
+        "start": 2,
+        "end": 9,
+        "original": "อนุญาติ",
+        "suggestions": [
+          {
+            "text": "อนุญาต",
+            "confidence": null,
+            "source": "canonical_dictionary"
+          }
+        ],
+        "message": "known misspelling; canonical form is 'อนุญาต'",
+        "protected": false,
+        "requires_review": false
+      }
+    ],
+    "summary": {
+      "count": 1,
+      "by_category": {
+        "spelling": 1
+      }
+    }
+  },
+  "isError": false
+}

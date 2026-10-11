@@ -1,0 +1,155 @@
+{
+  "tools": [
+    {
+      "name": "thai_analyze",
+      "description": "Diagnose Thai/English mixed text: issues + protected spans. Never edits.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "profile": {
+            "default": "technical",
+            "enum": [
+              "general",
+              "formal",
+              "technical"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "glossary": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Glossary"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "thai_analyzeArguments"
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true,
+        "title": "thai_analyzeDictOutput"
+      }
+    },
+    {
+      "name": "thai_correct",
+      "description": "Suggest minimal patches (default) or apply review-free ones (safe_apply).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "profile": {
+            "default": "technical",
+            "enum": [
+              "general",
+              "formal",
+              "technical"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "mode": {
+            "default": "suggest",
+            "title": "Mode",
+            "type": "string"
+          },
+          "max_changes": {
+            "default": 10,
+            "title": "Max Changes",
+            "type": "integer"
+          },
+          "glossary": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Glossary"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "thai_correctArguments"
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true,
+        "title": "thai_correctDictOutput"
+      }
+    },
+    {
+      "name": "thai_validate",
+      "description": "Preflight verdict: PASS / WARN / FAIL. FAIL needs deterministic evidence.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "profile": {
+            "default": "technical",
+            "enum": [
+              "general",
+              "formal",
+              "technical"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "glossary": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Glossary"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "thai_validateArguments"
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": true,
+        "title": "thai_validateDictOutput"
+      }
+    }
+  ]
+}

@@ -41,8 +41,12 @@ Repository = "https://github.com/lazymarcus005-maker/thai-writing-quality"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.data-files]
+"share/thai-writing-mcp/skills/thai-writing-quality" = ["skills/thai-writing-quality/SKILL.md"]
+
 [tool.setuptools.package-data]
 thai_writing_mcp = ["py.typed", "config/data/*.txt", "config/data/*.json"]
+skills = ["thai-writing-quality/SKILL.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

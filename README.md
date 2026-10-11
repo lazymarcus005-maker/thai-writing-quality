@@ -19,6 +19,15 @@ pytest                # run the test suite
 thai-writing-mcp          # serves thai_analyze / thai_correct / thai_validate over stdio
 ```
 
+## Install the agent skill
+
+```bash
+cp -r skills/thai-writing-quality ~/.claude/skills/   # Claude Code (user scope)
+```
+
+See [docs/claude-code-integration.md](docs/claude-code-integration.md) for
+the full host integration (`.mcp.json`, headless smoke, degradation rules).
+
 ## Tools (v1 contracts)
 
 | Tool | Purpose |

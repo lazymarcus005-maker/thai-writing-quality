@@ -1,0 +1,21 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"schema_version\": \"1.0\",\n  \"engine_version\": \"0.1.0\",\n  \"dictionary_version\": \"1.0+31b0fcea6edb\",\n  \"status\": \"PASS\",\n  \"issues\": [],\n  \"protected_integrity\": true,\n  \"summary\": {\n    \"count\": 0,\n    \"by_category\": {}\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "schema_version": "1.0",
+    "engine_version": "0.1.0",
+    "dictionary_version": "1.0+31b0fcea6edb",
+    "status": "PASS",
+    "issues": [],
+    "protected_integrity": true,
+    "summary": {
+      "count": 0,
+      "by_category": {}
+    }
+  },
+  "isError": false
+}
