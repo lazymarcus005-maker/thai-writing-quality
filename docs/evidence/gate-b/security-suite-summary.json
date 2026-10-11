@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-10-11T05:26:36Z",
+  "suite": "tests/security + tests/e2e + tests/integration",
+  "result": ".....................................                                    [100%]",
+  "coverage": {
+    "prompt_injection": "tests/security/test_adversarial.py::TestPromptInjection",
+    "bidi_marks": "TestUnicodeAttacks::test_rlo_spoofing_flagged_high (FAIL verdict)",
+    "confusables": "TestUnicodeAttacks::test_confusable_in_token_outside_code",
+    "thai_combining_sequences": "TestUnicodeAttacks::test_combining_stack_flagged_but_valid_thai_not",
+    "markdown_nesting": "TestMarkdownAndFences::test_nested_markdown_protection",
+    "code_fence_boundaries": "TestMarkdownAndFences (unclosed fence, boundaries)",
+    "api_tokens_and_secrets": "TestSecretsAndLogging (no log echo, content intact)",
+    "escaped_content_and_pathological": "TestPathologicalInputs (9 classes incl. floods, ctrl chars)",
+    "network_isolation": "tests/security/test_network_isolation.py (sockets raise in-process; blackhole-proxy subprocess)",
+    "no_persistence": "TestNoPersistence::test_engine_persists_nothing",
+    "invocation_cap_abuse": "tests/e2e/test_e2e_scenarios.py::test_e2e_invocation_burst_respects_cap (burst of 8, cap 5)",
+    "e2e_mixed_language_real_client": "tests/e2e/test_e2e_scenarios.py (release note + incident scenarios)"
+  },
+  "production_readiness": "NOT production-ready: threat review by a security engineer and operational tests (load, restart, multi-tenant) have not been performed. Gate B evidence demonstrates the security test suite passes, nothing more."
+}

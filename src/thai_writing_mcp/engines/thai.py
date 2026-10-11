@@ -132,7 +132,7 @@ class ThaiAnalyzer:
                     ][:_MAX_SUGGESTIONS]
                     issues.append(self._unknown_issue(merged, cs, candidates))
                     claimed.append((cs, ce))
-                    i = next(j for j, (_, s, _) in enumerate(toks) if s >= ce)
+                    i = next((j for j, (_, sx, _) in enumerate(toks) if sx >= ce), len(toks))
                     continue
             i += 1
 
