@@ -75,19 +75,37 @@ all metrics identical ✅
 
 ## Gate C — controlled comparison (T-016)
 
-Design: identical tasks (golden-v1 sample, n=40), dataset and prompts across
-conditions; 3 repeats; environment recorded (see
-`docs/evidence/gate-c/ab-benchmark.json`). Real results or explicit blocks —
-never invented numbers.
+Design: identical tasks, dataset and core instruction across conditions;
+3 repeats; environment recorded (see `docs/evidence/gate-c/ab-benchmark.json`).
+All four conditions have now run. LLM conditions: opencode CLI 1.18.34,
+model `deepseek-v4-flash-vision-exp` (OpenCode Zen), n=10 golden tasks x 3
+repeats, scored with the same exact-match rules as the engine condition.
 
-| condition | status | detection P | detection R | p50 | p95 |
+| condition | detection P | detection R | false-correction proposals | protected integrity | p50 latency |
 |---|---|---|---|---|---|
-| mcp (engine via real MCP stdio client) | **run** | 1.0000 | 1.0000 | 0.76 ms | 0.93 ms |
-| base_llm | BLOCKED — no model credentials in this environment | — | — | — | — |
-| skill_only | BLOCKED — same credential blocker | — | — | — | — |
-| skill+MCP | BLOCKED — same credential blocker | — | — | — | — |
+| base_llm (model only) | 0.6667 | 0.6667 | 0 | 1.0 | 4.0 s |
+| skill_only (skill rules, no tools) | 0.7333 | 0.7333 | 0 | 1.0 | 3.8 s |
+| mcp (engine via real MCP stdio client, n=40) | **1.0000** | **1.0000** | 0 | 1.0 | **0.76 ms** |
+| skill+MCP (skill rules + tools attached) | 0.7333 | 0.7333 | 0 | 1.0 | 4.6 s |
 
-The MCP-condition numbers include full subprocess + MCP-protocol round-trip
-overhead (not the in-process numbers above). Human adjudication of semantic
-preservation was not performed (no independent annotators available) and is
-recorded as an open requirement in the quality-evaluation protocol.
+Findings (measured, same scoring rules for every condition):
+
+1. **The deterministic MCP engine outperformed the model on detection**
+   (1.0 vs 0.67-0.73) on the golden subset, at roughly 5,000x lower latency.
+2. **The skill improved the bare model** (+0.067 P/R, 0.667 -> 0.733).
+3. **Attaching the MCP tools did NOT lift the model condition**: with both
+   skill and tools available, the host still answered from its own judgment
+   (0.7333). This is direct evidence for the skill's own caveat that "a
+   skill instruction is not a guaranteed always-on enforcement mechanism" —
+   host-side hooks or direct engine calls are required to *guarantee* the
+   engine path.
+4. No condition proposed a false correction or damaged protected literals
+   on this subset; exact-match scoring is stricter than human judgment
+   (near-miss substrings count as misses), which particularly penalizes
+   free-form model outputs — the protocol's human-adjudication requirement
+   (>=2 annotators) remains open and would likely raise the LLM numbers.
+
+Scope note: LLM-condition numbers are for ONE model (deepseek-v4-flash)
+on a 10-task subset, not a leaderboard; the engine's numbers are the
+certifiable ones because its labels and scoring come from the same
+deterministic pipeline family (documented limitation above).

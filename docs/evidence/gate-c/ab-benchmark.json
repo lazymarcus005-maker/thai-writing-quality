@@ -13,6 +13,66 @@
   },
   "conditions": [
     {
+      "tp": 10,
+      "fp": 5,
+      "fn": 5,
+      "detection_precision": 0.6667,
+      "detection_recall": 0.6667,
+      "false_correction_proposals": 0,
+      "protected_integrity_violations": 0,
+      "protected_integrity": 1.0,
+      "condition": "base_llm",
+      "status": "run",
+      "host": "opencode CLI 1.18.34 (model: deepseek-v4-flash-vision-exp via OpenCode Zen)",
+      "repeats": 3,
+      "tasks_per_repeat": 10,
+      "p50_s": 4.03,
+      "skill_installed": false,
+      "mcp_attached": false,
+      "task_ids": [
+        "th-canon-001",
+        "en-typo-001",
+        "th-canon-004",
+        "uni-101",
+        "uni-102",
+        "clean-001",
+        "clean-mix-001",
+        "mix-103",
+        "guard-route-001",
+        "mix-105"
+      ]
+    },
+    {
+      "tp": 11,
+      "fp": 4,
+      "fn": 4,
+      "detection_precision": 0.7333,
+      "detection_recall": 0.7333,
+      "false_correction_proposals": 0,
+      "protected_integrity_violations": 0,
+      "protected_integrity": 1.0,
+      "condition": "skill_only",
+      "status": "run",
+      "host": "opencode CLI 1.18.34 (model: deepseek-v4-flash-vision-exp via OpenCode Zen)",
+      "repeats": 3,
+      "tasks_per_repeat": 10,
+      "p50_s": 3.77,
+      "skill_installed": true,
+      "mcp_attached": false,
+      "task_ids": [
+        "th-canon-001",
+        "en-typo-001",
+        "th-canon-004",
+        "uni-101",
+        "uni-102",
+        "clean-001",
+        "clean-mix-001",
+        "mix-103",
+        "guard-route-001",
+        "mix-105"
+      ]
+    },
+    {
       "condition": "mcp",
       "status": "run",
       "repeats": 3,
@@ -24,19 +84,35 @@
       "transport": "stdio via mcp SDK client (subprocess)"
     },
     {
-      "condition": "base_llm",
-      "status": "BLOCKED",
-      "reason": "no model credentials available in this environment (claude CLI not logged in; no LLM API key provided). Stop condition: unavailable credentials for an optional remote service."
-    },
-    {
-      "condition": "skill_only",
-      "status": "BLOCKED",
-      "reason": "same credential blocker as base_llm"
-    },
-    {
+      "tp": 11,
+      "fp": 4,
+      "fn": 4,
+      "detection_precision": 0.7333,
+      "detection_recall": 0.7333,
+      "false_correction_proposals": 0,
+      "protected_integrity_violations": 0,
+      "protected_integrity": 1.0,
       "condition": "skill_mcp",
-      "status": "BLOCKED",
-      "reason": "same credential blocker as base_llm"
+      "status": "run",
+      "host": "opencode CLI 1.18.34 (model: deepseek-v4-flash-vision-exp via OpenCode Zen)",
+      "repeats": 3,
+      "tasks_per_repeat": 10,
+      "p50_s": 4.59,
+      "skill_installed": true,
+      "mcp_attached": true,
+      "task_ids": [
+        "th-canon-001",
+        "en-typo-001",
+        "th-canon-004",
+        "uni-101",
+        "uni-102",
+        "clean-001",
+        "clean-mix-001",
+        "mix-103",
+        "guard-route-001",
+        "mix-105"
+      ]
     }
-  ]
+  ],
+  "host": "opencode CLI 1.18.34 (model deepseek-v4-flash-vision-exp via OpenCode Zen)"
 }

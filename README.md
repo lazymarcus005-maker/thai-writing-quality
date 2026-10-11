@@ -53,14 +53,17 @@ Contracts: [docs/tool-contracts.md](docs/tool-contracts.md). Spec: [docs/spec.md
   independently human-annotated examples target is **not yet met**, so the
   measured precision/recall numbers are optimistic bounds — see
   [docs/benchmark-report.md](docs/benchmark-report.md).
-- The A/B comparison's LLM conditions (base LLM / skill-only / skill+MCP)
-  are **blocked on model credentials** in the build environment; only the
-  MCP condition is measured so far.
+- The A/B comparison has now run on all four conditions via opencode
+  (deepseek-v4-flash): the MCP engine beat the model on detection
+  (1.0 vs 0.67-0.73) at ~5,000x lower latency; notably, skill+MCP did not
+  lift the model — hosts don't reliably call attached tools without
+  enforcement. LLM numbers are one model on a 10-task subset.
 - Gate B and Gate C are explicitly **not "production ready"**: no
   independent threat review and no operational (load/restart/multi-tenant)
   tests have been performed.
-- The real-host skill smoke ran through MCP Inspector; a logged-in
-  Claude Code end-to-end transcript is still outstanding (CLI login).
+- The full agent-side skill workflow is verified on a real host
+  (opencode + deepseek-v4-flash): it followed read → analyze → correct
+  and reported both planted typos with protected tokens intact.
 
 ## Repository layout
 
