@@ -84,7 +84,7 @@ class Patch(BaseModel):
     original: str
     replacement: str
     applied: bool = False
-    reason: str
+    reason: str = ""
 
 
 class ValidationReport(BaseModel):
