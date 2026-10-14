@@ -23,5 +23,47 @@ jobs:
         run: ruff check src tests
       - name: Type check
         run: mypy src/thai_writing_mcp
-      - name: Unit + integration tests
-        run: pytest -q
+      - name: Unit + integration tests (coverage)
+        run: pytest -q --cov=thai_writing_mcp --cov-report=term-missing --cov-report=xml
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  dependency-audit:
+    # NFR-005: pinned deps must pass vulnerability checks (fail the build
+    # on known CVEs in mcp / pythainlp / transitive deps).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .
+      - name: pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit --skip-editable
+
+  docker-build:
+    # The production image must build from a clean checkout.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t thai-writing-mcp:ci .
+      - name: Smoke: server refuses requests without an API key (fail closed)
+        run: |
+          docker run -d --name twq -p 127.0.0.1:18099:8000 thai-writing-mcp:ci
+          sleep 3
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:18099/mcp \
+            -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","method":"initialize","id":1}')
+          echo "status=$code"
+          [ "$code" = "503" ] || [ "$code" = "401" ]
+          curl -sf http://127.0.0.1:18099/healthz | grep -q '"status":"ok"'
+          docker rm -f twq

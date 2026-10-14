@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
@@ -178,3 +179,18 @@ class GlossaryView:
 def default_config() -> GlossaryConfig:
     """The bundled example glossary (global + software domain + demo project)."""
     return GlossaryConfig.from_json_file(str(EXAMPLE_GLOSSARY_PATH))
+
+
+def config_from_env(env: dict[str, str] | None = None) -> GlossaryConfig | None:
+    """Persistent glossary for a deployment: ``TWQ_GLOSSARY_FILE``.
+
+    Returns None when unset (callers fall back to the bundled default). A
+    set-but-broken path raises the typed EngineError from ``from_json_file``
+    so servers fail fast at startup instead of silently losing terms.
+    """
+
+    merged = os.environ | (env or {})
+    path = merged.get("TWQ_GLOSSARY_FILE", "").strip()
+    if not path:
+        return None
+    return GlossaryConfig.from_json_file(path)

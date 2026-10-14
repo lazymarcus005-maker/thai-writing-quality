@@ -6,11 +6,11 @@ boundary: the transport adapter knows nothing about NLP rules).
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, OrderedDict
 
 from thai_writing_mcp.config.glossary import GlossaryConfig, GlossaryView, default_config
 from thai_writing_mcp.core.offsets import build_analysis_view
-from thai_writing_mcp.core.patches import PatchPlanner, apply_patches
+from thai_writing_mcp.core.patches import PatchPlanner, apply_patches, patch_diff
 from thai_writing_mcp.core.patches import _bounded_levenshtein as _edit_size
 from thai_writing_mcp.core.protection import ProtectionEngine
 from thai_writing_mcp.core.validate import InvariantVerifier
@@ -25,6 +25,45 @@ from thai_writing_mcp.schemas.errors import (
 )
 from thai_writing_mcp.schemas.models import Issue, Patch, ProtectedSpan, versions_block
 
+#: Analyzer bundles are expensive (62k-word Trie each); bound the cache so a
+#: caller cycling distinct glossaries cannot grow memory without limit.
+_MAX_BUNDLES = 16
+
+#: Code points of context on each side of an issue in the `preview` field.
+_PREVIEW_CONTEXT = 24
+
+
+def issues_payload(issues: list[Issue], text: str) -> list[dict]:
+    """Issue dicts enriched with a human/LLM-readable `preview` window.
+
+    Models cannot reliably count code-point offsets; the preview shows the
+    issue span (wrapped in U+27E6/U+27E7) with surrounding context so a
+    reviewer can locate it without offset arithmetic.
+    """
+
+    out: list[dict] = []
+    for issue in issues:
+        d = issue.model_dump()
+        lo = max(0, issue.start - _PREVIEW_CONTEXT)
+        hi = min(len(text), issue.end + _PREVIEW_CONTEXT)
+        d["preview"] = (
+            ("…" if lo > 0 else "")
+            + text[lo : issue.start]
+            + "⟦"
+            + issue.original
+            + "⟧"
+            + text[issue.end : hi]
+            + ("…" if hi < len(text) else "")
+        )
+        out.append(d)
+    return out
+
+
+def patches_payload(patches: list[Patch]) -> list[dict]:
+    """Patch dicts enriched with a rendered `diff` line per patch."""
+
+    return [p.model_dump() | {"diff": patch_diff(p)} for p in patches]
+
 
 class WritingEngine:
     """The deterministic P0 engine behind all MCP tools."""
@@ -32,28 +71,34 @@ class WritingEngine:
     def __init__(self, config: GlossaryConfig | None = None) -> None:
         self._config = config or default_config()
         # Analyzer bundles are expensive (62k-word Trie) — build once per
-        # distinct request-glossary, not per call. Shared read-only across
-        # threads (benign race: worst case one duplicate build).
-        self._bundles: dict[
+        # distinct request-glossary, not per call, in a bounded LRU (a
+        # caller cycling glossaries must not grow memory without limit).
+        # Shared read-only across threads (benign race: worst case one
+        # duplicate build).
+        self._bundles: OrderedDict[
             tuple,
             tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer, StyleAnalyzer],
-        ] = {}
+        ] = OrderedDict()
 
     # -- shared context -----------------------------------------------------
     def _context(
         self, profile: str, glossary: list[str] | None
     ) -> tuple[GlossaryView, ProtectionEngine, ThaiAnalyzer, EnglishAnalyzer, StyleAnalyzer]:
         key = tuple(sorted(glossary or []))
-        if key not in self._bundles:
-            view = GlossaryView(self._config, request_terms=glossary)
-            protection = ProtectionEngine(protect_terms=view.protect_terms())
-            self._bundles[key] = (
-                view,
-                protection,
-                ThaiAnalyzer(view),
-                EnglishAnalyzer(view),
-                StyleAnalyzer(),
-            )
+        if key in self._bundles:
+            self._bundles.move_to_end(key)
+            return self._bundles[key]
+        view = GlossaryView(self._config, request_terms=glossary)
+        protection = ProtectionEngine(protect_terms=view.protect_terms())
+        self._bundles[key] = (
+            view,
+            protection,
+            ThaiAnalyzer(view),
+            EnglishAnalyzer(view),
+            StyleAnalyzer(),
+        )
+        if len(self._bundles) > _MAX_BUNDLES:
+            self._bundles.popitem(last=False)
         return self._bundles[key]
 
     def _issues(
@@ -90,7 +135,7 @@ class WritingEngine:
             **versions_block(glossary_view.dictionary_version()),
             "original": text,
             "protected_spans": [sp.model_dump() for sp in spans],
-            "issues": [i.model_dump() for i in issues],
+            "issues": issues_payload(issues, text),
             "summary": {"count": len(issues), "by_category": by_category},
         }
 
@@ -153,8 +198,8 @@ class WritingEngine:
             **versions_block(glossary_view.dictionary_version()),
             "original": text,
             "corrected": corrected,
-            "patches": [p.model_dump() for p in patches],
-            "issues": [i.model_dump() for i in issues],
+            "patches": patches_payload(patches),
+            "issues": issues_payload(issues, text),
             "requires_review": requires_review,
             "validation": {
                 "ok": validation.ok,
@@ -231,7 +276,7 @@ class WritingEngine:
                 "protected_spans_checked": len(spans),
             }
         return {
-            "accepted": [p.model_dump() for p in accepted],
+            "accepted": patches_payload(accepted),
             "declined": declined,
             "corrected": corrected,
             "requires_review": True,  # external proposals ALWAYS require review
@@ -320,8 +365,8 @@ class WritingEngine:
             **versions_block(context[0].dictionary_version()),
             "original": text,
             "proposed": proposed,
-            "patches": [p.model_dump() for p in patches],
-            "issues": [i.model_dump() for i in issues],
+            "patches": patches_payload(patches),
+            "issues": issues_payload(issues, text),
             "requires_review": True,
             "validation": {
                 "ok": not violations,

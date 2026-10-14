@@ -33,6 +33,12 @@ def _bounded_levenshtein(a: str, b: str) -> int:
     return prev[-1]
 
 
+def patch_diff(patch: Patch) -> str:
+    """Rendered before/after line for one patch (LLM- and human-readable)."""
+
+    return f"- {patch.original}\n+ {patch.replacement}"
+
+
 def apply_patches(
     text: str, patches: list[Patch], *, max_edit_ratio: float = DEFAULT_MAX_EDIT_RATIO
 ) -> str:

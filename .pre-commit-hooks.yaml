@@ -1,0 +1,14 @@
+# pre-commit hook exported by this repo. Consuming repos add:
+#
+#   - repo: https://github.com/lazymarcus005-maker/thai-writing-quality
+#     rev: <tag>
+#     hooks:
+#       - id: thai-writing-check
+#
+- id: thai-writing-check
+  name: thai-writing-check
+  description: Deterministic Thai writing-quality gate (FAIL blocks; needs PyThaiNLP)
+  entry: thai-writing-check
+  language: python
+  pass_filenames: true
+  types: [text]

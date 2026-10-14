@@ -5,6 +5,7 @@ SDK's transport already enforces body caps + session idle timeouts; the
 hardening middleware adds auth / rate limiting / tenant checks.
 """
 
+import json
 import socket
 
 import pytest
@@ -182,3 +183,113 @@ def test_fail_closed_without_api_key() -> None:
         HTTPConfig({"TWQ_HTTP_ALLOW_ANONYMOUS": "1", "TWQ_HTTP_HOST": "127.0.0.1"}).api_key
         == "loopback-dev-key"
     )
+
+
+async def test_healthz_unauthenticated_liveness(http_server) -> None:
+    import httpx2 as httpx
+
+    async with httpx.AsyncClient(timeout=5) as client:
+        res = await client.get(f"http://127.0.0.1:{http_server['port']}/healthz")
+        assert res.status_code == 200
+        assert res.json()["status"] == "ok"
+        assert res.json()["service"] == "thai-writing-quality"
+
+
+async def test_responses_carry_request_id(http_server) -> None:
+    import httpx2 as httpx
+
+    async with httpx.AsyncClient(timeout=5) as client:
+        res = await client.post(
+            f"http://127.0.0.1:{http_server['port']}/mcp",
+            json={"jsonrpc": "2.0", "method": "initialize", "id": 1},
+            headers={"Authorization": f"Bearer {http_server['key']}"},
+        )
+        assert res.headers.get("x-request-id")
+
+
+async def test_tenant_glossary_isolation(tmp_path) -> None:
+    """The documented promise, now wired: each tenant's engine uses that
+    tenant's glossary — terminology never crosses tenants."""
+    import threading
+
+    import anyio
+    import httpx2
+    import uvicorn
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamable_http_client
+
+    from thai_writing_mcp.http_server import build_http_app
+
+    a = tmp_path / "tenant-a.json"
+    b = tmp_path / "tenant-b.json"
+    a.write_text(
+        json.dumps({"version": "tenant-a", "global": {"protect": ["Zyxwvu"]}})
+    )
+    b.write_text(
+        json.dumps(
+            {
+                "version": "tenant-b",
+                "global": {"canonical": {"อนุญาติ": "อนุมัติ"}},
+            }
+        )
+    )
+    port = free_port()
+    tenants = json.dumps({"a": str(a), "b": str(b)})
+    app, _config = build_http_app(
+        {
+            "TWQ_HTTP_API_KEY": "tk",
+            "TWQ_HTTP_PORT": str(port),
+            "TWQ_TENANT_GLOSSARIES": tenants,
+        }
+    )
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="error"))
+    threading.Thread(target=server.run, daemon=True).start()
+    for _ in range(100):
+        await anyio.sleep(0.05)
+        if server.started:
+            break
+
+    async def analyze_for(tenant: str) -> dict:
+        http_client = httpx2.AsyncClient(
+            headers={"Authorization": "Bearer tk", "X-Tenant": tenant}, timeout=10
+        )
+        async with streamable_http_client(
+            f"http://127.0.0.1:{port}/mcp", http_client=http_client
+        ) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                result = await session.call_tool("thai_analyze", {"text": "ขออนุญาติ Zyxwvu"})
+                return result.structured_content
+
+    try:
+        out_a = await analyze_for("a")
+        out_b = await analyze_for("b")
+        # tenant a: Zyxwvu protected, default canonical อนุญาติ -> อนุญาต
+        kinds_a = {sp["kind"] for sp in out_a["protected_spans"]}
+        assert "glossary_term" in kinds_a
+        assert out_a["dictionary_version"].startswith("tenant-a")
+        assert any(i["original"] == "อนุญาติ" for i in out_a["issues"])
+        # tenant b: canonical map overridden, no Zyxwvu protection
+        assert out_b["dictionary_version"].startswith("tenant-b")
+        assert not any(sp for sp in out_b["protected_spans"] if sp["kind"] == "glossary_term")
+        fix_b = next(i for i in out_b["issues"] if i["original"] == "อนุญาติ")
+        assert fix_b["suggestions"][0]["text"] == "อนุมัติ"
+    finally:
+        server.should_exit = True
+
+
+def test_broken_tenant_glossary_fails_at_startup(tmp_path) -> None:
+    import pytest
+
+    from thai_writing_mcp.http_server import build_http_app
+    from thai_writing_mcp.schemas.errors import EngineError
+
+    bad = tmp_path / "bad.json"
+    bad.write_text("{not json")
+    with pytest.raises(EngineError):
+        build_http_app(
+            {
+                "TWQ_HTTP_API_KEY": "k",
+                "TWQ_TENANT_GLOSSARIES": json.dumps({"t": str(bad)}),
+            }
+        )

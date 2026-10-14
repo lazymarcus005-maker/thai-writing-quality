@@ -12,6 +12,8 @@ import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from thai_writing_mcp import SCHEMA_VERSION
+
 SAMPLE_TH = "ขออนุญาติ deploy API ไป production"
 
 
@@ -46,7 +48,7 @@ async def test_gate_a_thai_analyze_structured() -> None:
         result = await s.call_tool("thai_analyze", {"text": SAMPLE_TH, "profile": "technical"})
         assert not result.is_error
         data = result.structured_content
-        assert data["schema_version"] == "1.0"
+        assert data["schema_version"] == SCHEMA_VERSION
         assert data["engine_version"] and data["dictionary_version"]
         assert data["original"] == SAMPLE_TH
         kinds = {sp["kind"] for sp in data["protected_spans"]}

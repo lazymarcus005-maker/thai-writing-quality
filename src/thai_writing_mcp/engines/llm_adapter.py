@@ -29,6 +29,9 @@ from thai_writing_mcp.schemas.errors import LLM_UNAVAILABLE, EngineError
 
 DEFAULT_TIMEOUT_S = 10.0
 MAX_TEXT_CHARS = 50_000
+#: Bound the provider response so a hostile endpoint cannot exhaust memory.
+MAX_RESPONSE_BYTES = 1_000_000
+DEFAULT_MAX_TOKENS = 2_000
 
 SYSTEM_PROMPT = (
     "You propose minimal corrections for Thai-English technical writing. "
@@ -72,6 +75,13 @@ class LLMAdapter:
             and bool(self._api_key)
             and bool(self._model)
         )
+        # Opt-in only: some OpenAI-compatible providers reject unknown
+        # fields, and a 400 would disable the adapter outright.
+        self._json_mode = merged.get("TWQ_LLM_JSON_MODE", "") == "1"
+        try:
+            self._max_tokens = int(merged.get("TWQ_LLM_MAX_TOKENS", str(DEFAULT_MAX_TOKENS)))
+        except ValueError:
+            self._max_tokens = DEFAULT_MAX_TOKENS
         self._transport = transport
         self._timeout_s = timeout_s
 
@@ -85,7 +95,10 @@ class LLMAdapter:
             "sends": ["the request text", "no other user data"],
             "requires_explicit_opt_in": "TWQ_LLM_ENABLED=1 + base url + api key + model",
             "credentials": "environment/secret manager only; never logged",
-            "network": "one POST per request, single attempt, hard timeout",
+            "network": (
+                "one POST per request, single attempt, hard timeout, "
+                f"max_tokens={self._max_tokens}, response capped at {MAX_RESPONSE_BYTES} bytes"
+            ),
             "trust": "output is proposals only; invariant verifier gates application",
         }
 
@@ -101,6 +114,7 @@ class LLMAdapter:
         payload = {
             "model": self._model,
             "temperature": 0,
+            "max_tokens": self._max_tokens,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
@@ -110,6 +124,8 @@ class LLMAdapter:
                 },
             ],
         }
+        if self._json_mode:
+            payload["response_format"] = {"type": "json_object"}
         status, body = self._post(
             f"{self._base_url}/chat/completions",
             json.dumps(payload).encode("utf-8"),
@@ -136,7 +152,15 @@ class LLMAdapter:
         req = urllib.request.Request(url, data=body, headers=headers, method="POST")
         try:
             with urllib.request.urlopen(req, timeout=self._timeout_s) as resp:
-                return resp.status, resp.read()
+                data = resp.read(MAX_RESPONSE_BYTES + 1)
+                if len(data) > MAX_RESPONSE_BYTES:
+                    raise EngineError(
+                        LLM_UNAVAILABLE,
+                        "LLM provider response exceeds the size cap; discarding",
+                        retryable=True,
+                        details={"limit": MAX_RESPONSE_BYTES},
+                    )
+                return resp.status, data
         except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
             raise EngineError(
                 LLM_UNAVAILABLE,

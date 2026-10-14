@@ -15,8 +15,17 @@ optional proposal source; every P0 behavior works without it.
 | `TWQ_LLM_API_KEY` | credential — **environment / secret manager only** |
 | `TWQ_LLM_MODEL` | model identifier |
 
+Optional tuning (safe defaults, all fail closed):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TWQ_LLM_MAX_TOKENS` | `2000` | response cap in the request payload |
+| `TWQ_LLM_JSON_MODE=1` | off | sends `response_format: {"type":"json_object"}`; opt-in because some providers 400 on the field |
+
 No keys are hardcoded, logged, or echoed. One POST per request, single
-attempt, hard timeout (`DEFAULT_TIMEOUT_S = 10`).
+attempt, hard timeout (`DEFAULT_TIMEOUT_S = 10`). The provider response is
+read with a hard 1 MB cap — a hostile or chatty endpoint cannot exhaust
+memory (oversized responses are discarded with `LLM_UNAVAILABLE`).
 
 ## What is sent
 

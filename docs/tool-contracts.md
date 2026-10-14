@@ -1,5 +1,5 @@
-# MCP Tool Contracts v1
-All offsets are Unicode code-point positions into `original`, zero-based, half-open [start,end). Original text is immutable.
+# MCP Tool Contracts v1.1
+All offsets are Unicode code-point positions into `original`, zero-based, half-open [start,end). Original text is immutable. v1.1 is additive over v1: every issue carries a `preview` and every returned patch carries a `diff` — LLM consumers cannot reliably count code-point offsets, so use these fields to locate and review changes instead of offset arithmetic.
 
 ## thai_analyze
 Input: `{text: string, profile?: 'general'|'formal'|'technical', glossary?: string[]}`.
@@ -7,7 +7,7 @@ Output: `{schema_version, engine_version, dictionary_version, original, protecte
 
 ## thai_correct
 Input: `{text, profile?, mode?: 'suggest'|'safe_apply', max_changes?: integer, glossary?: string[]}`. `suggest` is default. In `safe_apply`, only whitelisted deterministic edits with passing invariant gate may be applied; otherwise emit suggestions.
-Output: `{schema_version,original,corrected,patches:[{start,end,original,replacement,applied,reason}],issues,requires_review,validation}`.
+Output: `{schema_version,original,corrected,patches:[Patch],issues,requires_review,validation}`.
 
 ## thai_validate
 Input: `{text, profile?, glossary?}`. Output: `{schema_version,status:'PASS'|'WARN'|'FAIL',issues,protected_integrity,summary}`. A WARN is not a FAIL. `FAIL` needs deterministic evidence.
@@ -16,7 +16,12 @@ Input: `{text, profile?, glossary?}`. Output: `{schema_version,status:'PASS'|'WA
 Input: `{text,profile,preserve_meaning?:boolean}`. Output: `{original,proposed,patches,issues,requires_review:true,validation}`. Never automatically publish rewrite. The `preserve_meaning` flag requests behavior, not proof.
 
 ## Issue
-`{id:string,rule_id:string,category:string,severity:'info'|'low'|'medium'|'high',start:int,end:int,original:string,suggestions:[{text:string,confidence:number|null,source:string}],message:string,protected:boolean,requires_review:boolean}`.
+`{id:string,rule_id:string,category:string,severity:'info'|'low'|'medium'|'high',start:int,end:int,original:string,suggestions:[{text:string,confidence:number|null,source:string}],message:string,protected:boolean,requires_review:boolean,preview:string}`.
+`preview` is a context window around the span with the issue text wrapped in `⟦ ⟧` (e.g. `…ขอ⟦อนุญาติ⟧ deploy…`) — elision marks (`…`) indicate truncated context.
+
+## Patch
+`{start:int,end:int,original:string,replacement:string,applied:boolean,reason:string,diff:string}`.
+`diff` is a two-line before/after rendering (`- original\n+ replacement`) for human/model review.
 
 ## Invariants
 - `original[start:end] == issue.original` (Python code points).

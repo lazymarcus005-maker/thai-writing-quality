@@ -12,6 +12,7 @@ import sys
 
 import pytest
 
+from thai_writing_mcp import SCHEMA_VERSION
 from thai_writing_mcp.core.pipeline import WritingEngine
 from thai_writing_mcp.engines.llm_adapter import LLMAdapter
 from thai_writing_mcp.schemas.errors import LLM_UNAVAILABLE
@@ -37,7 +38,7 @@ class TestContract:
         out = rewrite("ขออนุญาติ deploy", profile="technical")
         for field in ("original", "proposed", "patches", "issues", "requires_review", "validation"):
             assert field in out
-        assert out["schema_version"] == "1.0"
+        assert out["schema_version"] == SCHEMA_VERSION
 
     def test_llm_disabled_by_default_no_network_path(self) -> None:
         out = rewrite("respones ช้า", profile="technical")
@@ -170,8 +171,6 @@ class TestGuardrails:
         assert out["validation"]["ok"] is True
         # Now a text engineered to exceed the bound: 1 typo in a tiny text is fine,
         # so drive the ratio with a large replacement via the merge gate instead.
-        from thai_writing_mcp.core.pipeline import WritingEngine
-
         engine = WritingEngine()
         merged = engine.merge_external_proposals(
             "respones",

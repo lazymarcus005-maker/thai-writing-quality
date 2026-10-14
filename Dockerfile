@@ -22,9 +22,11 @@ ENV TWQ_HTTP_HOST=0.0.0.0 \
 # the app refuses every request (fail closed).
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD python -c "import os,urllib.request; \
-assert os.environ.get('TWQ_HTTP_API_KEY'), 'api key missing'; \
-print('config-ok')" || exit 1
+# Liveness probe against the real server (unauthenticated GET /healthz),
+# not just an environment-variable check.
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 --start-period=5s \
+  CMD python -c "import urllib.request; \
+r = urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2); \
+assert r.status == 200, r.status" || exit 1
 
 CMD ["thai-writing-http"]

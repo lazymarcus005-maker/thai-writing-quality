@@ -10,9 +10,15 @@ request-body cap and session idle timeout), this module adds:
 - **Loopback default**: binds 127.0.0.1 unless TWQ_HTTP_HOST says otherwise.
 - **Rate limiting**: per-token token bucket (429 when exhausted).
 - **Tenant scoping**: ``X-Tenant`` must name a tenant from
-  ``TWQ_TENANT_GLOSSARIES`` (JSON map tenant -> glossary path, "" = bundled
-  default). Unknown tenants are rejected; glossary selection never crosses
-  tenants.
+  ``TWQ_TENANT_GLOSSARIES`` (JSON map tenant -> glossary file path, "" = bundled
+  default). Unknown tenants are rejected and each tenant's tool calls run
+  against a WritingEngine built from that tenant's glossary — glossary
+  selection never crosses tenants. Tenant glossary files are validated at
+  startup; a broken file fails the server loudly (never serves wrong terms).
+- **Invocation cap**: rolling per-minute window (default 10k), not a lifetime
+  total — a long-lived server must not refuse all traffic after N calls.
+- **Health**: unauthenticated ``GET /healthz`` for load balancers and the
+  Docker HEALTHCHECK; every response carries an ``X-Request-ID``.
 
 Run: ``thai-writing-http`` (console script) or
 ``python -m thai_writing_mcp.http_server``.
@@ -24,14 +30,25 @@ import hmac
 import json
 import os
 import time
+import uuid
 from collections import defaultdict
+from contextvars import ContextVar
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from thai_writing_mcp import __version__
+from thai_writing_mcp.config.glossary import GlossaryConfig, config_from_env, default_config
+from thai_writing_mcp.core.pipeline import WritingEngine
+from thai_writing_mcp.schemas.errors import EngineError
+
 DEFAULT_PORT = 8000
 DEFAULT_RATE_LIMIT_PER_MIN = 60
 DEFAULT_MAX_BODY_BYTES = 1_000_000
+DEFAULT_HTTP_INVOCATIONS_PER_MIN = 10_000
+
+#: Set by the middleware per request; the engine resolver reads it.
+_CURRENT_TENANT: ContextVar[str | None] = ContextVar("twq_tenant", default=None)
 
 
 class _TokenBucket:
@@ -52,7 +69,7 @@ class _TokenBucket:
 
 
 class HardeningMiddleware:
-    """ASGI middleware: auth, rate limit, tenant scoping, body cap."""
+    """ASGI middleware: health, auth, rate limit, tenant scoping, body cap."""
 
     def __init__(self, app, config: HTTPConfig) -> None:
         self.app = app
@@ -68,6 +85,16 @@ class HardeningMiddleware:
             await self.app(scope, receive, send)
             return
         request = Request(scope)
+        # 0. Unauthenticated liveness probe (no data, no engine).
+        if scope.get("path") == "/healthz" and request.method in ("GET", "HEAD"):
+            await JSONResponse(
+                {
+                    "status": "ok",
+                    "service": "thai-writing-quality",
+                    "version": __version__,
+                }
+            )(scope, receive, send)
+            return
         # 1. Authentication (constant-time compare).
         if self.config.api_key is None:
             await JSONResponse(
@@ -86,7 +113,7 @@ class HardeningMiddleware:
                 status_code=401,
             )(scope, receive, send)
             return
-        # 2. Tenant scoping.
+        # 2. Tenant scoping (the chosen tenant's engine serves the request).
         tenant = request.headers.get("x-tenant", "default")
         if tenant not in self.config.tenants:
             await JSONResponse(
@@ -118,7 +145,21 @@ class HardeningMiddleware:
                 headers={"Retry-After": "5"},
             )(scope, receive, send)
             return
-        await self.app(scope, receive, send)
+        # 5. Dispatch with tenant + request id in the context.
+        request_id = uuid.uuid4().hex[:16]
+        token = _CURRENT_TENANT.set(tenant)
+
+        async def send_with_id(message) -> None:
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.append((b"x-request-id", request_id.encode("ascii")))
+                message["headers"] = headers
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_with_id)
+        finally:
+            _CURRENT_TENANT.reset(token)
 
 
 class HTTPConfig:
@@ -135,6 +176,9 @@ class HTTPConfig:
         self.max_body_bytes = int(
             merged.get("TWQ_HTTP_MAX_BODY_BYTES", str(DEFAULT_MAX_BODY_BYTES))
         )
+        self.invocations_per_min = int(
+            merged.get("TWQ_HTTP_INVOCATIONS_PER_MIN", str(DEFAULT_HTTP_INVOCATIONS_PER_MIN))
+        )
         tenant_map = merged.get("TWQ_TENANT_GLOSSARIES", "")
         try:
             self.tenants: dict[str, str] = json.loads(tenant_map) if tenant_map else {"default": ""}
@@ -149,13 +193,38 @@ class HTTPConfig:
             )
 
 
+def _tenant_glossary_configs(config: HTTPConfig) -> dict[str, GlossaryConfig | None]:
+    """Load and validate every tenant's glossary at startup (fail closed)."""
+
+    base = config_from_env() or default_config()
+    out: dict[str, GlossaryConfig | None] = {}
+    for tenant, path in config.tenants.items():
+        if not path:
+            out[tenant] = base
+            continue
+        out[tenant] = GlossaryConfig.from_json_file(path)  # raises on bad file
+    return out
+
+
 def build_http_app(env: dict[str, str] | None = None, mcp_server=None):
     """Build the hardened Streamable HTTP ASGI app (does not run a server)."""
 
     from thai_writing_mcp.server import build_server
 
     config = HTTPConfig(env)
-    mcp = mcp_server or build_server()
+    tenant_configs = _tenant_glossary_configs(config)
+    engines = {tenant: WritingEngine(cfg) for tenant, cfg in tenant_configs.items()}
+    default_engine = engines.get("default") or WritingEngine(config_from_env() or default_config())
+
+    def engine_resolver() -> WritingEngine:
+        tenant = _CURRENT_TENANT.get()
+        return engines.get(tenant or "", default_engine)
+
+    mcp = mcp_server or build_server(
+        engine_resolver=engine_resolver,
+        invocation_cap=config.invocations_per_min,
+        invocation_window_s=60.0,
+    )
     inner = mcp.streamable_http_app(
         stateless_http=True,
         json_response=True,
@@ -166,9 +235,20 @@ def build_http_app(env: dict[str, str] | None = None, mcp_server=None):
 
 
 def main() -> None:
+    import logging
+
     import uvicorn
 
-    app, config = build_http_app()
+    logging.basicConfig(
+        level=os.environ.get("TWQ_LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
+    try:
+        app, config = build_http_app()
+    except EngineError as exc:
+        # e.g. a tenant glossary file that does not parse: refuse to serve
+        # with silently wrong terminology (fail closed at startup).
+        raise SystemExit(f"startup failed: {exc}") from None
     if config.api_key is None:
         raise SystemExit(
             "TWQ_HTTP_API_KEY is required (or TWQ_HTTP_ALLOW_ANONYMOUS=1 on loopback only)"

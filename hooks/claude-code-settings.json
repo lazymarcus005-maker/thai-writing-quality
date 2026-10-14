@@ -1,0 +1,16 @@
+{
+  "$comment": "Merge this 'hooks' block into .claude/settings.json (project) or ~/.claude/settings.json (user). Replace the command path with the absolute path of the venv python that has thai-writing-mcp installed (or just 'thai-writing-check' if it is on PATH). Gate C evidence: hosts do not reliably call attached MCP tools — a PreToolUse hook is the enforced path.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/absolute/path/to/.venv/bin/thai-writing-check --hook"
+          }
+        ]
+      }
+    ]
+  }
+}
