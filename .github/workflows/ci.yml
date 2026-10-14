@@ -55,15 +55,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build image
         run: docker build -t thai-writing-mcp:ci .
-      - name: "Smoke: server refuses requests without an API key (fail closed)"
+      - name: "Smoke: auth fail-closed + healthz against the real server"
         run: |
-          docker run -d --name twq -p 127.0.0.1:18099:8000 thai-writing-mcp:ci
-          sleep 3
+          docker run -d --name twq -p 127.0.0.1:18099:8000 \
+            -e TWQ_HTTP_API_KEY=ci-smoke-key thai-writing-mcp:ci
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:18099/healthz >/dev/null && break
+            sleep 1
+          done
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
             http://127.0.0.1:18099/mcp \
             -H 'Content-Type: application/json' \
-            -d '{"jsonrpc":"2.0","method":"initialize","id":1}')
-          echo "status=$code"
-          [ "$code" = "503" ] || [ "$code" = "401" ]
+            -d '{"jsonrpc":"2.0","method":"initialize","id":1}' || true)
+          echo "unauthenticated status=$code (must be 401)"
+          [ "$code" = "401" ]
           curl -sf http://127.0.0.1:18099/healthz | grep -q '"status":"ok"'
           docker rm -f twq
